@@ -5,9 +5,9 @@ eQMARL: Quantum multi-agent reinforcement learning with entangled agents.
 
 Entanglement Type | Circuit
 ----------------- | -------
-None | ![](images/pqc_2_agents_2_qubits_1_layers_no_entanglement.svg?raw=true)
-$\ket{\Phi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_phi_plus.svg?raw=true)
-$\ket{\Psi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_psi_plus.svg?raw=true)
+None | ![](images/pqc_2_agents_2_qubits_1_layers_no_entanglement.svg?raw=true&sanitize=true)
+$\ket{\Phi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_phi_plus.svg?raw=true&sanitize=true)
+$\ket{\Psi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_psi_plus.svg?raw=true&sanitize=true)
 
 
 ## Current Results

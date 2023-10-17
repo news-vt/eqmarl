@@ -5,9 +5,9 @@ eQMARL: Quantum multi-agent reinforcement learning with entangled agents.
 
 Entanglement Type | Circuit
 ----------------- | -------
-None | ![](images/pqc_2_agents_2_qubits_1_layers_no_entanglement.svg?raw=true&sanitize=true)
-$\ket{\Phi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_phi_plus.svg?raw=true&sanitize=true)
-$\ket{\Psi^{+}}$ | ![](images/pqc_2_agents_2_qubits_1_layers_entangled_psi_plus.svg?raw=true&sanitize=true)
+None | ![](https://github.com/news-vt/eqmarl/blob/main/images/pqc_2_agents_2_qubits_1_layers_no_entanglement.svg?raw=true&sanitize=true)
+$\ket{\Phi^{+}}$ | ![](https://github.com/news-vt/eqmarl/blob/main/images/pqc_2_agents_2_qubits_1_layers_entangled_phi_plus.svg?raw=true&sanitize=true)
+$\ket{\Psi^{+}}$ | ![](https://github.com/news-vt/eqmarl/blob/main/images/pqc_2_agents_2_qubits_1_layers_entangled_psi_plus.svg?raw=true&sanitize=true)
 
 
 ## Current Results
@@ -16,6 +16,6 @@ The following table shows images from RL agents using PQCs with encoding and var
 
 Entanglement Type | Random $\theta$, Random $s$ | Identical $\theta$, Identical $s$ | Nearly Identical $\theta$, Identical $s$ |
 ------------------| -------| --------- | ---------------- |
-None | ![](images/no_entanglement_random_theta_random_s.png?raw=true) | ![](images/no_entanglement_identical_theta_identical_s.png?raw=true) | ![](images/no_entanglement_nearly_identical_theta_identical_s.png?raw=true)
-$\ket{\Phi^{+}}$ | ![](images/entangled_phi_plus_random_theta_random_s.png?raw=true) | ![](images/entangled_phi_plus_identical_theta_identical_s.png?raw=true) | ![](images/entangled_phi_plus_nearly_identical_theta_identical_s.png?raw=true)
-$\ket{\Psi^{+}}$ | ![](images/entangled_psi_plus_random_theta_random_s.png?raw=true) | ![](images/entangled_psi_plus_identical_theta_identical_s.png?raw=true) | ![](images/entangled_psi_plus_nearly_identical_theta_identical_s.png?raw=true)
+None | ![](https://github.com/news-vt/eqmarl/blob/main/images/no_entanglement_random_theta_random_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/no_entanglement_identical_theta_identical_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/no_entanglement_nearly_identical_theta_identical_s.png?raw=true)
+$\ket{\Phi^{+}}$ | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_phi_plus_random_theta_random_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_phi_plus_identical_theta_identical_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_phi_plus_nearly_identical_theta_identical_s.png?raw=true)
+$\ket{\Psi^{+}}$ | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_psi_plus_random_theta_random_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_psi_plus_identical_theta_identical_s.png?raw=true) | ![](https://github.com/news-vt/eqmarl/blob/main/images/entangled_psi_plus_nearly_identical_theta_identical_s.png?raw=true)

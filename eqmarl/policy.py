@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Callable, Generator, Iterable
 import cirq
 import numpy as np

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from contextlib import contextmanager
 from matplotlib import pyplot as plt
 from typing import Any, Callable, Iterable

@@ -1,0 +1,16 @@
+[project]
+name = "eqmarl"
+version = "0.1.0"
+authors = [
+    {name = "Alexander DeRieux", email = "alexander.derieux@gmail.com"},
+]
+requires-python = ">=3.7,<=3.9" # Required for support tensorflow-quantum on Linux and macOS (Darwin).
+license = {text = "MIT"}
+dynamic = ["dependencies"] # See section "tool.setuptools.dynamic".
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+
+[tool.setuptools.packages]
+find = {}  # Scanning implicit namespaces is active by default

@@ -56,7 +56,7 @@ def parameterized_variational_policy_circuit(
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
     variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
     entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
-    symbol_superscript_index: int = None
+    symbol_superscript_index: int = None,
     ) -> ParameterizedPolicyCircuitFunctionReturnType:
     """Simple parameterized variational policy.
 

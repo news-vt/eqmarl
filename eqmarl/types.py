@@ -14,6 +14,7 @@ EncodingCircuitFunctionType = Callable[[QubitListType, list[float]], Any]
 EntanglingCircuitFunctionType = Callable[[QubitListType], Any]
 
 SymbolType = str | sympy.Symbol
+SymbolListType = list[SymbolType]
 SymbolMatrixType = list[list[SymbolType]]
 SymbolValueDict = dict[SymbolType, Any]
 ParameterResolverFunctionType = Callable[[SymbolMatrixType], SymbolValueDict]

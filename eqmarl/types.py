@@ -1,11 +1,19 @@
 from __future__ import annotations
 from typing import Any, Callable
 import cirq
+import sympy
 
 QubitType = cirq.LineQubit | cirq.GridQubit
 QubitListType = list[QubitType]
+
+TwoQubitGateFunctionType = Callable[[QubitType, QubitType], Any]
+QubitGateFunctionType = Callable[[QubitType], Any]
+
 VariationalCircuitFunctionType = Callable[[QubitListType, list[list[float]]], Any]
 EncodingCircuitFunctionType = Callable[[QubitListType, list[float]], Any]
 EntanglingCircuitFunctionType = Callable[[QubitListType], Any]
-TwoQubitGateFunctionType = Callable[[QubitType, QubitType], Any]
-QubitGateFunctionType = Callable[[QubitType], Any]
+
+SymbolType = str | sympy.Symbol
+SymbolMatrixType = list[list[SymbolType]]
+SymbolValueDict = dict[SymbolType, Any]
+ParameterResolverFunctionType = Callable[[SymbolMatrixType], SymbolValueDict]

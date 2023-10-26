@@ -19,3 +19,5 @@ SymbolListType = list[SymbolType]
 SymbolMatrixType = list[list[SymbolType]]
 SymbolValueDict = dict[SymbolType, Any]
 ParameterResolverFunctionType = Callable[[SymbolMatrixType], SymbolValueDict]
+
+ParameterizedPolicyCircuitFunctionReturnType = tuple[CircuitGeneratorFunctionType, tuple[SymbolListType,...]]

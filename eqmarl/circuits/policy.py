@@ -57,7 +57,7 @@ def parameterized_variational_policy_circuit(
     variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
     entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
     symbol_superscript_index: int = None
-    ) -> tuple[CircuitGeneratorFunctionType, tuple[SymbolListType,...]]:
+    ) -> ParameterizedPolicyCircuitFunctionReturnType:
     """Simple parameterized variational policy.
 
     Contains variational layer with Rx, Ry, Rz rotations parameterized by $\theta$, followed by a next-neighbor entanglement layer.
@@ -87,7 +87,7 @@ def parameterized_variational_encoding_policy_circuit(
     entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: circular_entangling_layer(qubits, gate=cirq.CZ),
     encoding_layer_fn: EncodingCircuitFunctionType = lambda qubits, symbols: single_rotation_encoding_layer(qubits, symbols, gate=cirq.rx),
     symbol_superscript_index: int = None
-    ) -> tuple[CircuitGeneratorFunctionType, list[list]]:
+    ) -> ParameterizedPolicyCircuitFunctionReturnType:
     """More complex parameterized variational + encoding policy.
 
     Contains variational layers with Rx, Ry, Rz rotations parameterized by $\theta$, followed by a next-neighbor entanglement layer, followed by an encoding layer to encode the state $s$. The final layer in the circuit is a variational layer.

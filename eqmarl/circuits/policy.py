@@ -1,4 +1,5 @@
 from __future__ import annotations
+from ..types import *
 from typing import Any, Callable, Generator, Iterable
 import cirq
 import numpy as np
@@ -7,7 +8,7 @@ import sympy
 
 ## Adapted from: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning
 
-def variational_rotation_3(qubit: cirq.LineQubit, symbols: tuple[float, float, float]) -> tuple[Any, Any, Any]:
+def variational_rotation_3(qubit: QubitType, symbols: tuple[float, float, float]) -> tuple[Any, Any, Any]:
     """Applies 3 rotation gates (Rx, Ry, Rz) to a single qubit using provided symbols for parameterization."""
     return [
         cirq.rx(symbols[0])(qubit),
@@ -16,16 +17,16 @@ def variational_rotation_3(qubit: cirq.LineQubit, symbols: tuple[float, float, f
     ]
 
 def variational_rotation_layer(
-    qubits: list[cirq.LineQubit],
+    qubits: QubitListType,
     symbols: list[list[float]],
-    variational_rotation_fn: Callable[[cirq.LineQubit, list[float]], Any] = variational_rotation_3,
+    variational_rotation_fn: Callable[[QubitType, list[float]], Any] = variational_rotation_3,
     ):
     return [variational_rotation_fn(qubit, symbols[i]) for i, qubit in enumerate(qubits)]
 
 
 def circular_entangling_layer(
-    qubits: list[cirq.LineQubit],
-    gate: Callable[[cirq.LineQubit, cirq.LineQubit], Any] = cirq.CZ,
+    qubits: QubitListType,
+    gate: TwoQubitGateFunctionType = cirq.CZ,
     ) -> Generator:
     """Entangles a list of qubits with their next-neighbor in circular fashion (i.e., ensures first and last qubit are also entangled)."""
     yield [gate(q0, q1) for q0, q1 in zip(qubits, qubits[1:])]
@@ -34,17 +35,17 @@ def circular_entangling_layer(
 
 
 def neighbor_entangling_layer(
-    qubits: list[cirq.LineQubit],
-    gate: Callable[[cirq.LineQubit, cirq.LineQubit], Any] = cirq.CNOT,
+    qubits: QubitListType,
+    gate: TwoQubitGateFunctionType = cirq.CNOT,
     ) -> Generator:
     """Entangles a list of qubits with their next-neighbor (does not entangle first and last qubit)."""
     yield [gate(q0, q1) for q0, q1 in zip(qubits, qubits[1:])]
 
 
 def single_rotation_encoding_layer(
-    qubits: list[cirq.LineQubit],
+    qubits: QubitListType,
     symbols: list[float],
-    gate: Callable[[cirq.LineQubit], Any] = cirq.rx,
+    gate: QubitGateFunctionType = cirq.rx,
     ) -> Any:
     yield [gate(symbols[i])(qubit) for i, qubit in enumerate(qubits)]
 
@@ -53,8 +54,8 @@ def parameterized_variational_policy_circuit(
     qubits: list,
     n_layers: int,
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
-    variational_layer_fn: Callable[[list[cirq.LineQubit], list[list[float]]], Any] = variational_rotation_layer,
-    entangling_layer_fn: Callable[[list[cirq.LineQubit]], Any] = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
+    variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
+    entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
     symbol_superscript_index: int = None
     ) -> tuple[Callable[[], Iterable[Any]], list[list]]:
     """Simple parameterized variational policy.
@@ -134,9 +135,9 @@ def parameterized_variational_encoding_policy_circuit(
     qubits: list,
     n_layers: int,
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
-    variational_layer_fn: Callable[[list[cirq.LineQubit], list[list[float]]], Any] = variational_rotation_layer,
-    entangling_layer_fn: Callable[[list[cirq.LineQubit]], Any] = lambda qubits: circular_entangling_layer(qubits, gate=cirq.CZ),
-    encoding_layer_fn: Callable[[list[cirq.LineQubit], list[float]], Any] = lambda qubits, symbols: single_rotation_encoding_layer(qubits, symbols, gate=cirq.rx),
+    variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
+    entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: circular_entangling_layer(qubits, gate=cirq.CZ),
+    encoding_layer_fn: EncodingCircuitFunctionType = lambda qubits, symbols: single_rotation_encoding_layer(qubits, symbols, gate=cirq.rx),
     symbol_superscript_index: int = None
     ) -> tuple[Callable[[], Iterable[Any]], list[list]]:
     """More complex parameterized variational + encoding policy.

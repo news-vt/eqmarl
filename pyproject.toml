@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = [
     {name = "Alexander DeRieux", email = "alexander.derieux@gmail.com"},
 ]
-requires-python = "==3.9" # Required for support tensorflow-quantum on Linux and macOS (Darwin).
+requires-python = "==3.9" # >=3.7,<=3.9 required for tensorflow-quantum, but >=3.9 required for typing usage, so fixing ==3.9 here.
 license = {text = "MIT"}
 dynamic = ["dependencies"] # See section "tool.setuptools.dynamic".
 

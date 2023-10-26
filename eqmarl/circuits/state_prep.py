@@ -1,10 +1,11 @@
 from __future__ import annotations
 import cirq
 import numpy as np
+from ..types import *
 
 ## Functions to create various entangled input states.
 
-def entangle_agents_phi_plus(qubits: list[cirq.LineQubit], d: int, n: int):
+def entangle_agents_phi_plus(qubits: QubitListType, d: int, n: int):
     """Entangles via $\\Phi^+$."""
     for i in range(d):
         yield cirq.H(qubits[i])
@@ -12,7 +13,7 @@ def entangle_agents_phi_plus(qubits: list[cirq.LineQubit], d: int, n: int):
             yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
 
 
-def entangle_agents_phi_minus(qubits: list[cirq.LineQubit], d: int, n: int):
+def entangle_agents_phi_minus(qubits: QubitListType, d: int, n: int):
     """Entangles via $\\Phi^-$."""
     for i in range(d):
         yield cirq.X(qubits[i])
@@ -21,7 +22,7 @@ def entangle_agents_phi_minus(qubits: list[cirq.LineQubit], d: int, n: int):
             yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
 
 
-def entangle_agents_psi_plus(qubits: list[cirq.LineQubit], d: int, n: int):
+def entangle_agents_psi_plus(qubits: QubitListType, d: int, n: int):
     """Entangles via $\\Psi^+$."""
     for i in range(d):
         yield cirq.H(qubits[i])
@@ -30,7 +31,7 @@ def entangle_agents_psi_plus(qubits: list[cirq.LineQubit], d: int, n: int):
             yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
 
 
-def entangle_agents_psi_minus(qubits: list[cirq.LineQubit], d: int, n: int):
+def entangle_agents_psi_minus(qubits: QubitListType, d: int, n: int):
     """Entangles via $\\Psi^-$."""
     for i in range(d):
         yield cirq.X(qubits[i])
@@ -41,7 +42,7 @@ def entangle_agents_psi_minus(qubits: list[cirq.LineQubit], d: int, n: int):
 
 
 def prepare_state_from_state_vector(
-    qubits: list[cirq.LineQubit],
+    qubits: QubitListType,
     target_state: np.ndarray, name: str = "StatePreparation",
     ):
     """Prepares an arbitrary state vector.

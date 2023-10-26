@@ -20,4 +20,12 @@ SymbolMatrixType = list[list[SymbolType]]
 SymbolValueDict = dict[SymbolType, Any]
 ParameterResolverFunctionType = Callable[[SymbolMatrixType], SymbolValueDict]
 
+
+
 ParameterizedPolicyCircuitFunctionReturnType = tuple[CircuitGeneratorFunctionType, tuple[SymbolListType,...]]
+
+ParameterizedPolicyCircuitFunctionType = Callable[[QubitListType], ParameterizedPolicyCircuitFunctionReturnType] # Single-agent variant inputs qubit list.
+MultiAgentParameterizedPolicyCircuitFunctionType = Callable[[QubitListType, int], ParameterizedPolicyCircuitFunctionReturnType] # Multi-agent variant inputs qubit list and agent index.
+
+InitialStatePrepCircuitFunctionType = Callable[[QubitListType], Iterable[Any]] # Single-agent variant of a initial state preparation function.
+MultiAgentInitialStatePrepCircuitFunctionType = Callable[[QubitListType, int, int], Iterable[Any]] # Multi-agent variant of initial state preparation function that requires qubit list, qubit dimension `d`, and number of agents `n`.

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import sympy
+from .types import *
 
 # This flag globally disables all quantum circuit tests within the function `test_runner` (defined below).
 # Use this flag to prevent lots of tests from running and taking up significant execution time.
@@ -64,8 +65,8 @@ def plot_state_histogram_agents(samples, axis, d: int, n: int, key_prefix: str =
 def build_parameterized_system_circuit(
     d: int, 
     n: int, 
-    policy_fn: Callable[[list[cirq.LineQubit], int], tuple[Iterable[Any], list[list[sympy.Symbol]]]],
-    initial_state_prep_fn: Callable[[list[cirq.LineQubit]], Any] = None,
+    policy_fn: MultiAgentParameterizedPolicyCircuitFunctionType,
+    initial_state_prep_fn: MultiAgentInitialStatePrepCircuitFunctionType = None,
     meas_key_all: str = 'all',
     meas_key_prefix_agent: str = 'agent',
     meas_flag: bool = True, # Denotes whether to perform measurements (True) or not (False).
@@ -112,13 +113,13 @@ def simulate_parameterized_circuit(
 def test_runner(
     d: int,
     n: int,
-    policy_fn: Callable[[list[cirq.LineQubit], int], tuple[Iterable[Any], list[list]]],
-    symbol_resolver_fn: Callable[..., dict] = None,
+    policy_fn: MultiAgentParameterizedPolicyCircuitFunctionType,
+    symbol_resolver_fn: ParameterResolverFunctionType = None,
     figure_kwargs: dict = dict(layout='constrained', figsize=(20,14)),
     subfigure_kwargs: dict = dict(nrows=2, ncols=2, wspace=0.09, hspace=0.09),
     figure_title: str = None,
     repetitions: int = 100,
-    initial_state_prep_fn: Callable[[list[cirq.LineQubit]], Any] = None,
+    initial_state_prep_fn: MultiAgentInitialStatePrepCircuitFunctionType = None,
     plot_all_histogram: bool = True,
     plot_agent_histogram: bool = True,
     return_sim_results: bool = False,

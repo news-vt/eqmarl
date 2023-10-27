@@ -5,7 +5,6 @@ from ..types import *
 import cirq
 import tensorflow as tf
 import tensorflow_quantum as tfq
-import tensorflow.keras as keras
 
 # Classical A3C tutorial in TensorFlow (2016):
 # https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-8-asynchronous-actor-critic-agents-a3c-c88f72a5e9f2#.hg13tn9zw
@@ -101,63 +100,10 @@ class VariationalEncodingPQC(PQCBase):
         tiled_up_theta = tf.tile(self.theta, multiples=[batch_dim, 1])
         tiled_up_inputs = tf.tile(inputs[0], multiples=[1, self.n_layers])
         
-        joined_vars = tiled_up_theta
+        scaled_inputs = tf.einsum('i,ji->ji', self.lmbd, tiled_up_inputs)
+        squashed_inputs = tf.keras.layers.Activation(self.activation)(scaled_inputs)
+        
+        joined_vars = tf.concat([tiled_up_theta, squashed_inputs], axis=1)
         joined_vars = tf.gather(joined_vars, self.indices, axis=1)
         
         return self.pqc([tiled_up_circuits, joined_vars])
-
-# class PolicyPQC(keras.layers.Layer):
-
-#     def __init__(self,
-#         qubits: QubitListType,
-#         # n_layers: int,
-#         # n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
-#         # variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
-#         # entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
-#         # symbol_superscript_index: int = None,
-#         policy_circuit_fn: ParameterizedPolicyCircuitFunctionType, # User specifies simple function that builds policy circuit.
-#         observables: cirq.PauliSum | list[cirq.PauliSum],
-#         quantum_data_circuit_fn: Callable[[QubitListType], Iterable[Any]] = None,
-#         activation: str = 'linear',
-#         name: str = 'VariationalPolicyPQC',
-#         ):
-#         super().__init__(name=name)
-#         self.n_qubits = len(qubits)
-#         self.activation = activation
-
-#         # Get circuit generator function and symbol tuple.
-#         circuit_gen_fn, symbol_tuple = policy_circuit_fn(qubits)
-        
-#         # Build circuit and add as TFQ layer.
-#         circuit = cirq.Circuit(circuit_gen_fn(qubits))
-#         self.pqc = tfq.layers.ControlledPQC(circuit, observables)
-
-#         # Define circuit for quantum data.
-#         # In most cases there will only be classical data, so the `quantum_data_circuit_fn` will be an empty circuit.
-#         self.quantum_data = tfq.convert_to_tensor([
-#             cirq.Circuit(),
-#             quantum_data_circuit_fn(qubits) if quantum_data_circuit_fn is not None else [],
-#         ])
-
-#         # Define explicit symbol order.
-#         symbols = [str(symbol) for symbol_list in symbol_tuple for symbol in symbol_list]
-#         self.n_symbols = len(symbols)
-
-#         # Define TensorFlow variables for symbols.
-#         self.variables = tf.Variable(
-#             initial_value=tf.zeros(shape=(self.n_symbols,)),
-#             dtype='float32',
-#             trainable=True,
-#             name='variables',
-#         )
-
-#         # Define explicit symbol ordering.
-#         self.indices = tf.constant([symbols.index(name) for name in sorted(symbols)])
-
-#     def call(self, inputs):
-#         batch_dim = tf.gather(tf.shape(inputs[0]), 0) # Collect batch dimension.
-#         tiled_up_circuits = tf.repeat(self.quantum_data, repeats=batch_dim) # Repeat quantum data circuit for each batch.
-#         tiled_up_variables = tf.tile(self.variables, multiples=[batch_dim, 1])
-#         ## ...
-        
-#         return self.pqc([tiled_up_circuits, self.variables])

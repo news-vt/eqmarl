@@ -4,6 +4,7 @@ from ..circuits.pqc import *
 from ..types import *
 import cirq
 import tensorflow as tf
+import tensorflow.keras as keras
 import tensorflow_quantum as tfq
 
 # Classical A3C tutorial in TensorFlow (2016):
@@ -49,7 +50,7 @@ class VariationalEncodingPQC(PQCBase):
         self.activation = activation
 
         # Get circuit generator function and symbol tuple.
-        circuit_gen_fn, (symbols_theta, symbols_enc) = self.build_circuit(
+        circuit_gen_fn, (symbols_theta, symbols_enc) = VariationalEncodingPQC.build_circuit(
             qubits=qubits,
             n_layers=n_layers,
             n_var_rotations=n_var_rotations,
@@ -59,22 +60,18 @@ class VariationalEncodingPQC(PQCBase):
         )
         
         # Build circuit and add as TFQ layer.
-        circuit = cirq.Circuit(circuit_gen_fn(qubits))
+        circuit = cirq.Circuit(circuit_gen_fn())
         self.pqc = tfq.layers.ControlledPQC(circuit, observables)
 
         # Define circuit for quantum data.
         # In most cases there will only be classical data, so the `quantum_data_circuit_fn` will be an empty circuit.
         self.quantum_data = tfq.convert_to_tensor([
             cirq.Circuit(),
-            quantum_data_circuit_fn(qubits) if quantum_data_circuit_fn is not None else [],
+            cirq.Circuit(quantum_data_circuit_fn(qubits) if quantum_data_circuit_fn is not None else []),
         ])
 
         # Define explicit symbol order.
-        symbols = [
-            str(symbol) 
-            for symbol_list in symbols_theta + symbols_enc 
-            for symbol in symbol_list
-        ]
+        symbols = [str(symbol) for symbol in (symbols_theta + symbols_enc)]
         self.n_symbols = len(symbols)
         self.indices = tf.constant([symbols.index(name) for name in sorted(symbols)]) # Define explicit symbol ordering.
 
@@ -101,7 +98,7 @@ class VariationalEncodingPQC(PQCBase):
         tiled_up_inputs = tf.tile(inputs[0], multiples=[1, self.n_layers])
         
         scaled_inputs = tf.einsum('i,ji->ji', self.lmbd, tiled_up_inputs)
-        squashed_inputs = tf.keras.layers.Activation(self.activation)(scaled_inputs)
+        squashed_inputs = keras.layers.Activation(self.activation)(scaled_inputs)
         
         joined_vars = tf.concat([tiled_up_theta, squashed_inputs], axis=1)
         joined_vars = tf.gather(joined_vars, self.indices, axis=1)

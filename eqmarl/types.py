@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Union
 import cirq
 import sympy
 
-QubitType = cirq.LineQubit | cirq.GridQubit
+QubitType = Union[cirq.LineQubit, cirq.GridQubit]
 QubitListType = list[QubitType]
 
 TwoQubitGateFunctionType = Callable[[QubitType, QubitType], Any]
@@ -14,7 +14,7 @@ EncodingCircuitFunctionType = Callable[[QubitListType, list[float]], Any]
 EntanglingCircuitFunctionType = Callable[[QubitListType], Any]
 CircuitGeneratorFunctionType = Callable[[], Iterable[Any]] # Generator function that yields gate operations that define a given quantum circuit.
 
-SymbolType = str | sympy.Symbol
+SymbolType = Union[str, sympy.Symbol]
 SymbolListType = list[SymbolType]
 SymbolMatrixType = list[list[SymbolType]]
 SymbolValueDict = dict[SymbolType, Any]

@@ -1,1 +1,1 @@
-from .policy import *
+from .pqc import *

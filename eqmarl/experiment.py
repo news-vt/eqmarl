@@ -65,7 +65,7 @@ def plot_state_histogram_agents(samples, axis, d: int, n: int, key_prefix: str =
 def build_parameterized_system_circuit(
     d: int, 
     n: int, 
-    policy_fn: MultiAgentParameterizedPolicyCircuitFunctionType,
+    policy_fn: MultiAgentParameterizedCircuitFunctionType,
     initial_state_prep_fn: MultiAgentInitialStatePrepCircuitFunctionType = None,
     meas_key_all: str = 'all',
     meas_key_prefix_agent: str = 'agent',
@@ -113,7 +113,7 @@ def simulate_parameterized_circuit(
 def test_runner(
     d: int,
     n: int,
-    policy_fn: MultiAgentParameterizedPolicyCircuitFunctionType,
+    policy_fn: MultiAgentParameterizedCircuitFunctionType,
     symbol_resolver_fn: ParameterResolverFunctionType = None,
     figure_kwargs: dict = dict(layout='constrained', figsize=(20,14)),
     subfigure_kwargs: dict = dict(nrows=2, ncols=2, wspace=0.09, hspace=0.09),

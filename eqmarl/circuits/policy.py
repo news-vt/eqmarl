@@ -18,8 +18,8 @@ def variational_rotation_3(qubit: QubitType, symbols: tuple[float, float, float]
 
 def variational_rotation_layer(
     qubits: QubitListType,
-    symbols: list[list[float]],
-    variational_rotation_fn: Callable[[QubitType, list[float]], Any] = variational_rotation_3,
+    symbols: SymbolMatrixType,
+    variational_rotation_fn: Callable[[QubitType, SymbolListType], Any] = variational_rotation_3,
     ):
     return [variational_rotation_fn(qubit, symbols[i]) for i, qubit in enumerate(qubits)]
 
@@ -50,15 +50,15 @@ def single_rotation_encoding_layer(
     yield [gate(symbols[i])(qubit) for i, qubit in enumerate(qubits)]
 
 
-def parameterized_variational_policy_circuit(
-    qubits: list,
+def variational_pqc(
+    qubits: QubitListType,
     n_layers: int,
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
     variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
     entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
     symbol_superscript_index: int = None,
     ) -> ParameterizedPolicyCircuitFunctionReturnType:
-    """Simple parameterized variational policy.
+    """Simple parameterized variational circuit.
 
     Contains variational layer with Rx, Ry, Rz rotations parameterized by $\theta$, followed by a next-neighbor entanglement layer.
     """
@@ -79,8 +79,8 @@ def parameterized_variational_policy_circuit(
 
 
 
-def parameterized_variational_encoding_policy_circuit(
-    qubits: list,
+def variational_encoding_pqc(
+    qubits: QubitListType,
     n_layers: int,
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
     variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
@@ -88,7 +88,7 @@ def parameterized_variational_encoding_policy_circuit(
     encoding_layer_fn: EncodingCircuitFunctionType = lambda qubits, symbols: single_rotation_encoding_layer(qubits, symbols, gate=cirq.rx),
     symbol_superscript_index: int = None
     ) -> ParameterizedPolicyCircuitFunctionReturnType:
-    """More complex parameterized variational + encoding policy.
+    """More complex parameterized variational + encoding circuit.
 
     Contains variational layers with Rx, Ry, Rz rotations parameterized by $\theta$, followed by a next-neighbor entanglement layer, followed by an encoding layer to encode the state $s$. The final layer in the circuit is a variational layer.
     """

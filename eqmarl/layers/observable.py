@@ -22,7 +22,7 @@ class AlternatingObservables(keras.layers.Layer):
 
 
 class WeightedAlternatingObservables(AlternatingObservables):
-    """Applies inverse temperature parameter to alternative observables.
+    """Applies inverse temperature parameter $\\beta$ to alternating observables.
     
     Inspired by: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning#2_policy-gradient_rl_with_pqc_policies
     """

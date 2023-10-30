@@ -42,9 +42,9 @@ class VariationalEncodingPQC(PQCBase):
         symbol_superscript_index: int = None,
         quantum_data_circuit_fn: Callable[[QubitListType], Iterable[Any]] = None,
         activation: str = 'linear',
-        name: str = 'VariationalEncodingPQC',
+        **kwargs,
         ):
-        super().__init__(name=name)
+        super().__init__(**kwargs)
         self.n_layers = n_layers
         self.n_qubits = len(qubits)
         self.activation = activation

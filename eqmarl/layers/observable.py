@@ -8,8 +8,8 @@ class AlternatingObservables(keras.layers.Layer):
     Inspired by: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning#2_policy-gradient_rl_with_pqc_policies
     """
     
-    def __init__(self, n_actions: int):
-        super().__init__()
+    def __init__(self, n_actions: int, **kwargs):
+        super().__init__(**kwargs)
         self.w = tf.Variable(
             initial_value=tf.constant([[(-1.)**i for i in range(n_actions)]]),
             dtype='float32',
@@ -27,8 +27,8 @@ class WeightedAlternatingObservables(AlternatingObservables):
     Inspired by: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning#2_policy-gradient_rl_with_pqc_policies
     """
     
-    def __init__(self, beta: float, n_actions: int):
-        super().__init__(n_actions=n_actions)
+    def __init__(self, beta: float, n_actions: int, **kwargs):
+        super().__init__(n_actions=n_actions, **kwargs)
         self.beta_layer = keras.layers.Lambda(lambda x: x * beta)
         
     def call(self, inputs):

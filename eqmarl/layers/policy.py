@@ -5,8 +5,8 @@ from .observable import *
 class WeightedAlternatingSoftmaxPolicy(keras.layers.Layer):
     """Softmax policy acting on weighted alternating observables using inverse temperature parameter $\\beta$.
     """
-    def __init__(self, beta: float, n_actions: int):
-        super().__init__()
+    def __init__(self, beta: float, n_actions: int, **kwargs):
+        super().__init__(**kwargs)
         self.beta = beta
         self.n_actions = n_actions
         self.weighted_alternating_obs_layer = WeightedAlternatingObservables(

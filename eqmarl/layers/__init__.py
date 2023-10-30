@@ -1,2 +1,2 @@
 from .pqc import *
-from .observables import *
+from .observable import *

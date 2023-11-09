@@ -60,13 +60,12 @@ class VariationalEncodingPQC(PQCBase):
         )
         
         # Build circuit and add as TFQ layer.
-        circuit = cirq.Circuit(circuit_gen_fn())
-        self.pqc = tfq.layers.ControlledPQC(circuit, observables)
+        self.circuit = cirq.Circuit(circuit_gen_fn())
+        self.pqc = tfq.layers.ControlledPQC(self.circuit, observables)
 
         # Define circuit for quantum data.
         # In most cases there will only be classical data, so the `quantum_data_circuit_fn` will be an empty circuit.
         self.quantum_data = tfq.convert_to_tensor([
-            cirq.Circuit(),
             cirq.Circuit(quantum_data_circuit_fn(qubits) if quantum_data_circuit_fn is not None else []),
         ])
 
@@ -96,11 +95,11 @@ class VariationalEncodingPQC(PQCBase):
         tiled_up_circuits = tf.repeat(self.quantum_data, repeats=batch_dim) # Repeat quantum data circuit for each batch.
         tiled_up_theta = tf.tile(self.theta, multiples=[batch_dim, 1])
         tiled_up_inputs = tf.tile(inputs[0], multiples=[1, self.n_layers])
-        
+
         scaled_inputs = tf.einsum('i,ji->ji', self.lmbd, tiled_up_inputs)
         squashed_inputs = keras.layers.Activation(self.activation)(scaled_inputs)
         
         joined_vars = tf.concat([tiled_up_theta, squashed_inputs], axis=1)
         joined_vars = tf.gather(joined_vars, self.indices, axis=1)
-        
+
         return self.pqc([tiled_up_circuits, joined_vars])

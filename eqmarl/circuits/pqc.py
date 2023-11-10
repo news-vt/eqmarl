@@ -1,12 +1,13 @@
 from __future__ import annotations
 from ..types import *
-from typing import Any, Callable, Generator, Iterable
+from typing import Any, Callable, Generator, Iterable, Type
 import cirq
 # import numpy as np
 import sympy
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as np
+from ..tools import flatten_to_operations
 
 
 ## Adapted from: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning
@@ -14,49 +15,50 @@ from pennylane import numpy as np
 def variational_rotation_3(
     wire: WireType,
     symbols: tuple[float, float, float],
-    ):
+    ) -> list[Operation]:
     """Applies 3 rotation gates (Rx, Ry, Rz) to a single qubit using provided symbols for parameterization."""
-    qml.RX(phi=symbols[0], wires=wire)
-    qml.RY(phi=symbols[1], wires=wire)
-    qml.RZ(phi=symbols[2], wires=wire)
+    return [
+        qml.RX(phi=symbols[0], wires=wire),
+        qml.RY(phi=symbols[1], wires=wire),
+        qml.RZ(phi=symbols[2], wires=wire),
+    ]
 
 
 def variational_rotation_layer(
     wires: WireListType,
     symbols: SymbolMatrixType,
     variational_rotation_fn: Callable[[QubitType, SymbolListType], Any] = variational_rotation_3,
-    ):
-    for i, wire in enumerate(wires):
-        variational_rotation_fn(wire, symbols[i])
+    ) -> list[Operation]:
+    return [variational_rotation_fn(wire, symbols[i]) for i, wire in enumerate(wires)]
 
 
 def circular_entangling_layer(
     wires: WireListType,
     gate: Operation = qml.CZ,
-    ):
+    ) -> list[Operation]:
     """Entangles a list of qubits with their next-neighbor in circular fashion (i.e., ensures first and last qubit are also entangled)."""
+    ops = []
     for w0, w1 in zip(wires, wires[1:]):
-        gate(wires=[w0, w1])
+        ops.append(gate(wires=[w0, w1]))
     if len(wires) != 2:
-        gate(wires=[wires[0], wires[-1]]) # Entangle the first and last qubit.
+        ops.append(gate(wires=[wires[0], wires[-1]])) # Entangle the first and last qubit.
+    return ops
 
 
 def neighbor_entangling_layer(
     wires: WireListType,
     gate: Operation = qml.CNOT,
-    ):
+    ) -> list[Operation]:
     """Entangles a list of qubits with their next-neighbor (does not entangle first and last qubit)."""
-    for w0, w1 in zip(wires, wires[1:]):
-        gate(w0, w1)
+    return [gate(w0, w1) for w0, w1 in zip(wires, wires[1:])]
 
 
 def single_rotation_encoding_layer(
     wires: WireListType,
     symbols: SymbolListType,
     gate: Operation = qml.RX,
-    ) -> Any:
-    for i, wire in enumerate(wires):
-        gate(symbols[i], wires=wire)
+    ) -> list[Operation]:
+    return [gate(symbols[i], wires=wire) for i, wire in enumerate(wires)]
 
 
 class ParameterizedOperation(Operation):
@@ -64,13 +66,13 @@ class ParameterizedOperation(Operation):
     
     Implements `shape()` to determine parameter shapes.
     """
-    operations = [] # Default is no operations, which will throw an error; users must override this or provide an operations list at runtime.
+    operations: list[type[Operation]] = [] # Default is no operations, which will throw an error; users must override this or provide an operations list at runtime.
     
     def __init__(self, 
         weights: np.tensor,
         wires: WireListType,
         id: str = None,
-        operations: list[Operation] = None,
+        operations: list[type[Operation]] = None,
         ):
         self._hyperparameters = {"operations": operations or self.operations}
         super().__init__(weights, wires=wires, id=id)
@@ -79,7 +81,7 @@ class ParameterizedOperation(Operation):
     def compute_decomposition(cls, 
         weights: np.tensor,
         wires: WireListType,
-        operations: list[Operation] = None,
+        operations: list[Type[Operation]] = None,
         ):
         # Ensure weights have proper shape.
         req_shape = cls.shape(wires, operations)
@@ -98,11 +100,10 @@ class ParameterizedOperation(Operation):
         return op_list
 
     @classmethod
-    def shape(cls, wires: WireListType, operations: list[Operation] = None):
+    def shape(cls, wires: WireListType, operations: list[Type[Operation]] = None):
 
         # Use default operations for class instance if none were provided.
         if operations is None: 
-            print('is NONE')
             operations = cls.operations
         
         assert len(operations) > 0, 'at least one operation is required'
@@ -196,3 +197,75 @@ def variational_encoding_pqc(
     return gen_circuit, (var_thetas.flatten().tolist(), enc_inputs.flatten().tolist())
 
 
+
+class VariationalEncodingPQC(Operation):
+    _hyperparameters = {
+        "variational_layer": VariationalRotationLayer,
+        "encoding_layer": EncodingLayer,
+        "entangling_layer": circular_entangling_layer,
+    }
+    
+    def __init__(self,
+        weights_var: np.tensor,
+        weights_enc: np.tensor,
+        n_layers: int,
+        wires: WireListType,
+        variational_layer: Type[ParameterizedOperation] = None,
+        encoding_layer: Type[ParameterizedOperation] = None,
+        entangling_layer: Type[Operation] = None,
+        id: str = None,
+        ):
+        self._hyperparameters = {
+            "variational_layer": variational_layer or self._hyperparameters["variational_layer"],
+            "encoding_layer": encoding_layer or self._hyperparameters["encoding_layer"],
+            "entangling_layer": entangling_layer or self._hyperparameters["entangling_layer"],
+        }
+        super().__init__(weights_var, weights_enc, n_layers, wires=wires, id=id)
+
+    @staticmethod
+    def compute_decomposition(
+        weights_var: np.tensor,
+        weights_enc: np.tensor,
+        n_layers: int,
+        wires: WireListType,
+        variational_layer: Type[ParameterizedOperation],
+        encoding_layer: Type[ParameterizedOperation],
+        entangling_layer: Type[Operation],
+        ):
+
+        op_list = []
+        for l in range(n_layers):
+            # Variational layer.
+            op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[l], wires=wires)))
+            op_list.extend(flatten_to_operations(entangling_layer(wires=wires)))
+            
+            # Encoding layer.
+            op_list.extend(flatten_to_operations(encoding_layer(weights=weights_enc[l], wires=wires)))
+
+        # Last variational layer at the end.
+        op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[l], wires=wires)))
+
+        return op_list
+
+    @classmethod
+    def shape(cls,
+        n_layers: int,
+        wires: WireListType,
+        variational_layer: Type[ParameterizedOperation] = None,
+        encoding_layer: Type[ParameterizedOperation] = None,
+        ):
+        """Returns tuple of (shape_var, shape_enc)."""
+
+        # Compute shape for single variational layer.
+        shape_var = (variational_layer or cls._hyperparameters["variational_layer"]).shape(wires)
+
+        # Compute shape for all variational layers.
+        shape_var = (n_layers + 1, *shape_var) # +1 because there is one additional variational layer at the end.
+
+        # Compute shape for single encoding layer.
+        shape_enc = (encoding_layer or cls._hyperparameters["encoding_layer"]).shape(wires)
+        
+        # Compute shape for all encoding layers.
+        shape_enc = (n_layers, *shape_enc)
+        
+        return shape_var, shape_enc

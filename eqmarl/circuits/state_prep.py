@@ -1,52 +1,53 @@
 from __future__ import annotations
-import cirq
+import pennylane as qml
 import numpy as np
 from ..types import *
 
 ## Functions to create various entangled input states.
 
-def entangle_agents_phi_plus(qubits: QubitListType, d: int, n: int):
+def entangle_agents_phi_plus(wires: WireListType, d: int, n: int):
     """Entangles via $\\Phi^+$."""
     for i in range(d):
-        yield cirq.H(qubits[i])
+        qml.Hadamard(wires=wires[i])
         for j in range(n-1):
-            yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
+            qml.CNOT(wires=[wires[j*d + i], wires[(j+1)*d + i]])
 
 
-def entangle_agents_phi_minus(qubits: QubitListType, d: int, n: int):
+def entangle_agents_phi_minus(wires: WireListType, d: int, n: int):
     """Entangles via $\\Phi^-$."""
     for i in range(d):
-        yield cirq.X(qubits[i])
-        yield cirq.H(qubits[i])
+        qml.PauliX(wires=wires[i])
+        qml.Hadamard(wires=wires[i])
         for j in range(n-1):
-            yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
+            qml.CNOT(wires=[wires[j*d + i], wires[(j+1)*d + i]])
 
 
-def entangle_agents_psi_plus(qubits: QubitListType, d: int, n: int):
+def entangle_agents_psi_plus(wires: WireListType, d: int, n: int):
     """Entangles via $\\Psi^+$."""
     for i in range(d):
-        yield cirq.H(qubits[i])
+        qml.Hadamard(wires=wires[i])
         for j in range(n-1):
-            yield cirq.X(qubits[(j+1)*d + i])
-            yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
+            qml.PauliX(wires=wires[(j+1)*d + i])
+            qml.CNOT(wires=[wires[j*d + i], wires[(j+1)*d + i]])
 
 
-def entangle_agents_psi_minus(qubits: QubitListType, d: int, n: int):
+def entangle_agents_psi_minus(wires: WireListType, d: int, n: int):
     """Entangles via $\\Psi^-$."""
     for i in range(d):
-        yield cirq.X(qubits[i])
-        yield cirq.H(qubits[i])
+        qml.PauliX(wires=wires[i])
+        qml.Hadamard(wires=wires[i])
         for j in range(n-1):
-            yield cirq.X(qubits[(j+1)*d + i])
-            yield cirq.CNOT(qubits[j*d + i], qubits[(j+1)*d + i])
+            qml.PauliX(wires=wires[(j+1)*d + i])
+            qml.CNOT(wires=[wires[j*d + i], wires[(j+1)*d + i]])
 
 
 def prepare_state_from_state_vector(
-    qubits: QubitListType,
-    target_state: np.ndarray, name: str = "StatePreparation",
+    wires: WireListType,
+    state: np.ndarray,
     ):
-    """Prepares an arbitrary state vector.
+    """Prepares an arbitrary state from state-vector representation.
     
-    This function wraps the built-in `cirq.StatePreparationChannel` to accommodate a list of qubits. 
+    This function wraps the built-in `qml.StatePrep` to accommodate a list of qubits. 
     """
-    yield cirq.StatePreparationChannel(target_state=target_state, name=name)(*qubits)
+    qml.StatePrep(state=state, wires=wires)
+    # yield cirq.StatePreparationChannel(target_state=target_state, name=name)(*qubits)

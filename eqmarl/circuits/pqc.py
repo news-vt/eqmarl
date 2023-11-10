@@ -2,78 +2,155 @@ from __future__ import annotations
 from ..types import *
 from typing import Any, Callable, Generator, Iterable
 import cirq
-import numpy as np
+# import numpy as np
 import sympy
+import pennylane as qml
+from pennylane.operation import Operation
+from pennylane import numpy as np
 
 
 ## Adapted from: https://www.tensorflow.org/quantum/tutorials/quantum_reinforcement_learning
 
-def variational_rotation_3(qubit: QubitType, symbols: tuple[float, float, float]) -> tuple[Any, Any, Any]:
+def variational_rotation_3(
+    wire: WireType,
+    symbols: tuple[float, float, float],
+    ):
     """Applies 3 rotation gates (Rx, Ry, Rz) to a single qubit using provided symbols for parameterization."""
-    return [
-        cirq.rx(symbols[0])(qubit),
-        cirq.ry(symbols[1])(qubit),
-        cirq.rz(symbols[2])(qubit),
-    ]
+    qml.RX(phi=symbols[0], wires=wire)
+    qml.RY(phi=symbols[1], wires=wire)
+    qml.RZ(phi=symbols[2], wires=wire)
+
 
 def variational_rotation_layer(
-    qubits: QubitListType,
+    wires: WireListType,
     symbols: SymbolMatrixType,
     variational_rotation_fn: Callable[[QubitType, SymbolListType], Any] = variational_rotation_3,
     ):
-    return [variational_rotation_fn(qubit, symbols[i]) for i, qubit in enumerate(qubits)]
+    for i, wire in enumerate(wires):
+        variational_rotation_fn(wire, symbols[i])
 
 
 def circular_entangling_layer(
-    qubits: QubitListType,
-    gate: TwoQubitGateFunctionType = cirq.CZ,
-    ) -> Generator:
+    wires: WireListType,
+    gate: Operation = qml.CZ,
+    ):
     """Entangles a list of qubits with their next-neighbor in circular fashion (i.e., ensures first and last qubit are also entangled)."""
-    yield [gate(q0, q1) for q0, q1 in zip(qubits, qubits[1:])]
-    if len(qubits) != 2:
-        yield gate(qubits[0], qubits[-1]) # Entangle the first and last qubit.
+    for w0, w1 in zip(wires, wires[1:]):
+        gate(wires=[w0, w1])
+    if len(wires) != 2:
+        gate(wires=[wires[0], wires[-1]]) # Entangle the first and last qubit.
 
 
 def neighbor_entangling_layer(
-    qubits: QubitListType,
-    gate: TwoQubitGateFunctionType = cirq.CNOT,
-    ) -> Generator:
+    wires: WireListType,
+    gate: Operation = qml.CNOT,
+    ):
     """Entangles a list of qubits with their next-neighbor (does not entangle first and last qubit)."""
-    yield [gate(q0, q1) for q0, q1 in zip(qubits, qubits[1:])]
+    for w0, w1 in zip(wires, wires[1:]):
+        gate(w0, w1)
 
 
 def single_rotation_encoding_layer(
-    qubits: QubitListType,
+    wires: WireListType,
     symbols: SymbolListType,
-    gate: QubitGateFunctionType = cirq.rx,
+    gate: Operation = qml.RX,
     ) -> Any:
-    yield [gate(symbols[i])(qubit) for i, qubit in enumerate(qubits)]
+    for i, wire in enumerate(wires):
+        gate(symbols[i], wires=wire)
+
+
+class ParameterizedOperation(Operation):
+    """Performs a list of parameterized operations on each qubit.
+    
+    Implements `shape()` to determine parameter shapes.
+    """
+    operations = [] # Default is no operations, which will throw an error; users must override this or provide an operations list at runtime.
+    
+    def __init__(self, 
+        weights: np.tensor,
+        wires: WireListType,
+        id: str = None,
+        operations: list[Operation] = None,
+        ):
+        self._hyperparameters = {"operations": operations or self.operations}
+        super().__init__(weights, wires=wires, id=id)
+
+    @classmethod
+    def compute_decomposition(cls, 
+        weights: np.tensor,
+        wires: WireListType,
+        operations: list[Operation] = None,
+        ):
+        # Ensure weights have proper shape.
+        req_shape = cls.shape(wires, operations)
+        assert weights.numpy().shape == req_shape, f'parameters must have shape {req_shape}'
+        
+        # Use default rotations for class instance if none were provided.
+        if operations is None: 
+            operations = cls.operations
+
+        # Decompose rotations into operations.
+        op_list = []
+        for i, wire in enumerate(wires):
+            for j, op in enumerate(operations):
+                op_list.append(op(weights[i, j], wires=wire))
+
+        return op_list
+
+    @classmethod
+    def shape(cls, wires: WireListType, operations: list[Operation] = None):
+
+        # Use default operations for class instance if none were provided.
+        if operations is None: 
+            print('is NONE')
+            operations = cls.operations
+        
+        assert len(operations) > 0, 'at least one operation is required'
+        
+        if isinstance(wires, (int, str)):
+            wires = [wires]
+        
+        return (len(wires), len(operations),)
+
+
+class VariationalRotationLayer(ParameterizedOperation):
+    """Parameterized variational rotation layer.
+    
+    Implements `shape()` to determine parameter shapes.
+    """
+    operations = [qml.RX, qml.RY, qml.RZ] # Default is 3 rotation sequence RX, RY, RZ.
+
+
+class EncodingLayer(ParameterizedOperation):
+    """Parameterized variational rotation layer.
+    
+    Implements `shape()` to determine parameter shapes.
+    """
+    operations = [qml.RX]
+
 
 
 def variational_pqc(
-    qubits: QubitListType,
+    wires: WireListType,
     n_layers: int,
     n_var_rotations: int = 3, # Number of rotational gates to apply for each qubit in the variational layer (e.g., Rx, Ry, Rz).
     variational_layer_fn: VariationalCircuitFunctionType = variational_rotation_layer,
-    entangling_layer_fn: EntanglingCircuitFunctionType = lambda qubits: neighbor_entangling_layer(qubits, gate=cirq.CNOT),
+    entangling_layer_fn: EntanglingCircuitFunctionType = lambda wires: neighbor_entangling_layer(wires, gate=qml.CNOT),
     symbol_superscript_index: int = None,
-    ) -> ParameterizedCircuitFunctionReturnType:
+    ):
     """Simple parameterized variational circuit.
 
     Contains variational layer with Rx, Ry, Rz rotations parameterized by $\theta$, followed by a next-neighbor entanglement layer.
     """
-    d = len(qubits) # Dimension of qubits.
+    d = len(wires) # Dimension of qubits.
     
     # Variational parameters.
     var_thetas = sympy.symbols(f"theta{f'^{{({symbol_superscript_index})}}' if symbol_superscript_index is not None else ''}(0:{n_var_rotations*(n_layers+1)*d})") # Add +1 here because there will be a final variational layer at the end.
     var_thetas = np.asarray(var_thetas).reshape((n_layers+1, d, n_var_rotations))
-
-    # Define generator to build circuit.
-    # This allows the caller to define circuit parameters.
-    def gen_circuit() -> Iterable[Any]:
-        for l in range(n_layers):
-            yield variational_layer_fn(qubits, var_thetas[l])
-            yield entangling_layer_fn(qubits)
+    
+    for l in range(n_layers):
+        variational_layer_fn(wires, var_thetas[l])
+        entangling_layer_fn(wires)
 
     return gen_circuit, (var_thetas.flatten().tolist(),)
 
@@ -117,8 +194,5 @@ def variational_encoding_pqc(
         yield variational_layer_fn(qubits, var_thetas[n_layers])
     
     return gen_circuit, (var_thetas.flatten().tolist(), enc_inputs.flatten().tolist())
-
-
-
 
 

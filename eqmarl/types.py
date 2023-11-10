@@ -3,6 +3,13 @@ from typing import Any, Callable, Iterable, Union
 import cirq
 import sympy
 
+
+WireType = int | str
+WireListType = list[WireType]
+
+
+###############
+
 QubitType = Union[cirq.LineQubit, cirq.GridQubit]
 QubitListType = list[QubitType]
 

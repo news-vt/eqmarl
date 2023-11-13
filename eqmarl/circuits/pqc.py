@@ -74,39 +74,55 @@ class ParameterizedOperation(Operation):
         id: str = None,
         operations: list[type[Operation]] = None,
         ):
-        self._hyperparameters = {"operations": operations or self.operations}
+        
+        # Ensure weights have proper shape.
+        req_shape = self.shape(wires, operations)
+        n_req_shape = len(req_shape)
+        weights_shape = qml.math.shape(weights)
+        n_weights_shape = len(weights_shape)
+        assert n_weights_shape == n_req_shape or n_weights_shape == n_req_shape + 1, (
+            f"Weights tensor must be {n_req_shape}-dimensional with shape {req_shape}"
+            f"or {n_req_shape+1}-dimensional if batching; got shape {weights_shape}"
+        )
+        
+        # Validate operations.
+        operations = operations or self.operations
+        assert len(operations) > 0, 'at least one operation is required'
+        
+        self._hyperparameters = {"operations": operations}
         super().__init__(weights, wires=wires, id=id)
 
+    # @staticmethod
     @classmethod
-    def compute_decomposition(cls, 
+    def compute_decomposition(cls,
         weights: np.tensor,
         wires: WireListType,
-        operations: list[Type[Operation]] = None,
+        operations: list[Type[Operation]],
         ):
-        # Ensure weights have proper shape.
-        req_shape = cls.shape(wires, operations)
-        assert weights.numpy().shape == req_shape, f'parameters must have shape {req_shape}'
-        
-        # Use default rotations for class instance if none were provided.
-        if operations is None: 
-            operations = cls.operations
 
         # Decompose rotations into operations.
         op_list = []
         for i, wire in enumerate(wires):
             for j, op in enumerate(operations):
-                op_list.append(op(weights[i, j], wires=wire))
+                op_list.append(op(weights[..., i, j], wires=wire))
 
         return op_list
 
     @classmethod
-    def shape(cls, wires: WireListType, operations: list[Type[Operation]] = None):
+    def shape(cls,
+        wires: WireListType,
+        operations: list[Type[Operation]] = None,
+        ):
+        """Returns tuple of (n_wires, n_operations).
+        
+        If no operations are provided then defaults to class operations.
+        
+        Note that the returned shape does not include a batch dimension.
+        """
 
         # Use default operations for class instance if none were provided.
         if operations is None: 
             operations = cls.operations
-        
-        assert len(operations) > 0, 'at least one operation is required'
         
         if isinstance(wires, (int, str)):
             wires = [wires]
@@ -236,14 +252,14 @@ class VariationalEncodingPQC(Operation):
         op_list = []
         for l in range(n_layers):
             # Variational layer.
-            op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[l], wires=wires)))
+            op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[..., l, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
             op_list.extend(flatten_to_operations(entangling_layer(wires=wires)))
             
             # Encoding layer.
-            op_list.extend(flatten_to_operations(encoding_layer(weights=weights_enc[l], wires=wires)))
+            op_list.extend(flatten_to_operations(encoding_layer(weights=weights_enc[..., l, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
 
         # Last variational layer at the end.
-        op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[l], wires=wires)))
+        op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[..., l, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
 
         return op_list
 
@@ -254,7 +270,10 @@ class VariationalEncodingPQC(Operation):
         variational_layer: Type[ParameterizedOperation] = None,
         encoding_layer: Type[ParameterizedOperation] = None,
         ):
-        """Returns tuple of (shape_var, shape_enc)."""
+        """Returns tuple of (shape_var, shape_enc).
+        
+        Note that the returned shapes do not include a batch dimension.
+        """
 
         # Compute shape for single variational layer.
         shape_var = (variational_layer or cls._hyperparameters["variational_layer"]).shape(wires)

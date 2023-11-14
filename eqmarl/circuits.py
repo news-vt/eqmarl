@@ -1,5 +1,8 @@
 import pennylane as qml
+from pennylane import numpy as np
 
+from .observables import TensorPauliZ
+from .ops import VariationalEncodingPQC
 from .types import WireListType
 
 
@@ -92,3 +95,82 @@ class QuantumCircuit:
     @staticmethod
     def get_shape(*args, **kwargs):
         raise NotImplementedError()
+    
+    
+
+
+class AgentCircuit(QuantumCircuit):
+    
+    def __init__(self,
+        wires,
+        n_layers,
+        obs_func = None,
+        initial_state_vector: str|np.ndarray = None,
+        ):
+        # self.wires = wires
+        # self.n_wires = len(wires)
+        super().__init__(wires=wires)
+        self.n_layers = n_layers
+        
+        if obs_func is None:
+            obs_func = lambda wires: TensorPauliZ(wires, 1, self.n_wires)
+        self.obs_func = obs_func
+        self.initial_state_vector = initial_state_vector
+
+    def __call__(self, weights_var, weights_enc, inputs=None):
+
+        # Prepare initial state via state vector.
+        if self.initial_state_vector is not None:
+            qml.QubitStateVector(self.initial_state_vector, wires=self.wires)
+        
+        # Encoding parameters.
+        # If inputs were provided then do the following:
+        # - Treat `enc_inputs` as lambda values which are multiplied by `inputs`.
+        # - `agents_enc_inputs` will NOT have a batch dimension
+        # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
+        if inputs is not None:
+            inputs = np.reshape(inputs, (-1, self.n_wires)) # Ensure shape is 2D with (batch, d_qubits)
+            weights_enc = np.einsum("lqf,bq->blqf", weights_enc, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+        
+        VariationalEncodingPQC(
+            weights_var=weights_var,
+            weights_enc=weights_enc,
+            n_layers=self.n_layers,
+            wires=self.wires,
+            )
+        
+        # Build dynamic list of measurements.
+        measurements = []
+        obs = self.obs_func(self.wires)
+        for o in obs:
+            measurements.append(qml.expval(o))
+
+        return measurements
+    
+    @property
+    def shape(self):
+        return self.get_shape(self.wires, self.n_layers)
+    
+    @property
+    def output_shape(self):
+        """Returns number of observables at output.
+        
+        This is useful in combination with `qml.KerasLayer`.
+        """
+        return (len(self.obs_func(self.wires)),)
+
+    @property
+    def input_shape(self):
+        """Returns required shape for `inputs` argument.
+        
+        Note 1: The returned shape does not include the batch dimension.
+        Note 2: PennyLane will compress inputs to 2D when batching for usage with `KerasLayer` or `TorchLayer`.
+        """
+        return (self.n_wires,)
+
+    @staticmethod
+    def get_shape(wires, n_layers):
+        return VariationalEncodingPQC.shape(
+            n_layers=n_layers,
+            wires=wires,
+            )

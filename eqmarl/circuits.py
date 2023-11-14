@@ -37,7 +37,7 @@ class QuantumCircuit:
         self.wires = wires
         self.n_wires = len(wires)
         
-        if isinstance(observables, (list, tuple)):
+        if hasattr(observables, '__iter__') and not isinstance(observables, str):
             self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
         elif isinstance(observables, Callable):
             self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.

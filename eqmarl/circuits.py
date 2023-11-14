@@ -1,8 +1,8 @@
 import pennylane as qml
 from pennylane import numpy as np
 
-from .observables import TensorPauliZ
-from .ops import VariationalEncodingPQC
+from .observables import *
+from .ops import *
 from .types import WireListType
 
 
@@ -174,3 +174,111 @@ class AgentCircuit(QuantumCircuit):
             n_layers=n_layers,
             wires=wires,
             )
+        
+        
+
+class MARLCircuit(QuantumCircuit):
+    
+    def __init__(self,
+        n,
+        d,
+        n_layers,
+        obs_func = None,
+        initial_state_vector: str|np.ndarray = None,
+        ):
+        super().__init__(wires=list(range(n * d)))
+        self.n_agents = n
+        self.d_qubits = d
+        self.n_layers = n_layers
+        
+        if obs_func is None:
+            obs_func = lambda wires: TensorPauliZ(wires, self.n_agents, self.d_qubits)
+        self.obs_func = obs_func
+        self.initial_state_vector = initial_state_vector
+
+    def __call__(self, 
+        agents_var_thetas: np.ndarray,
+        agents_enc_inputs: np.ndarray,
+        inputs = None, # Required for keras layer support; must have shape (batch, n_agents, d_qubits).
+        ):
+
+        # Prepare initial state using pre-determined state-prep function.
+        if isinstance(self.initial_state_vector, str):
+            match self.initial_state_vector:
+                case 'phi+':
+                    entangle_agents_phi_plus(self.wires, self.d_qubits, self.n_agents)
+                case 'phi-':
+                    entangle_agents_phi_minus(self.wires, self.d_qubits, self.n_agents)
+                case 'psi+':
+                    entangle_agents_psi_plus(self.wires, self.d_qubits, self.n_agents)
+                case 'psi-':
+                    entangle_agents_psi_minus(self.wires, self.d_qubits, self.n_agents)
+        # OR, prepare initial state via state vector.
+        elif self.initial_state_vector is not None:
+            qml.QubitStateVector(self.initial_state_vector, wires=self.wires)
+
+        # Create sub-circuit for each agent.
+        for aidx in range(self.n_agents):
+            qidx = aidx * self.d_qubits # Starting qubit index for the specified agent.
+            
+            # Variational parameters (batching is optional).
+            weights_var = agents_var_thetas[..., aidx, :, :, :]
+            
+            # Encoding parameters.
+            # If inputs were provided then do the following:
+            # - Treat `enc_inputs` as lambda values which are multiplied by `inputs`.
+            # - `agents_enc_inputs` will NOT have a batch dimension
+            # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
+            if inputs is not None:
+                inputs = np.reshape(inputs, (-1, self.n_agents, self.d_qubits)) # Ensure shape is 3D with (batch, n_agents, d_qubits)
+                weights_enc = np.einsum("alqf,baq->baqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+            else:
+                weights_enc = agents_enc_inputs[..., aidx, :, :, :]
+            
+            # Add PQC for the wires corresponding to the current agent.
+            VariationalEncodingPQC(
+                weights_var=weights_var,
+                weights_enc=weights_enc,
+                n_layers=self.n_layers,
+                wires=self.wires[qidx:qidx + self.d_qubits],
+            )
+
+        # Build dynamic list of measurements.
+        measurements = []
+        obs = self.obs_func(self.wires)
+        for o in obs:
+            measurements.append(qml.expval(o))
+
+        return measurements
+    
+    @property
+    def shape(self):
+        return self.get_shape(self.n_agents, self.d_qubits, self.n_layers)
+    
+    @property
+    def output_shape(self):
+        """Returns number of observables at output.
+        
+        This is useful in combination with `qml.KerasLayer`.
+        """
+        return (len(self.obs_func(self.wires)),)
+
+    @property
+    def input_shape(self):
+        """Returns required shape for `inputs` argument.
+        
+        Note 1: The returned shape does not include the batch dimension.
+        Note 2: PennyLane will compress inputs to 2D when batching for usage with `KerasLayer` or `TorchLayer`.
+        """
+        return (self.n_agents * self.d_qubits,)
+
+    @staticmethod
+    def get_shape(n, d, n_layers):
+        wires = list(range(n * d))
+        shape_var, shape_enc = VariationalEncodingPQC.shape(
+            n_layers=n_layers,
+            wires=wires[:d], # All agents are identical, so only need shape of first agent (wires 0, 1, ..., d-1).
+            )
+        shape_var = (n, *shape_var,)
+        shape_enc = (n, *shape_enc,)
+        return shape_var, shape_enc

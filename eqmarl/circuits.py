@@ -31,10 +31,18 @@ class QuantumCircuit:
     
     def __init__(self, 
         wires: WireListType,
+        observables: list | Callable[[list], list],
         ):
         assert isinstance(wires, (list, tuple)), f'Wires must either be a list or tuple; got {wires}'
         self.wires = wires
         self.n_wires = len(wires)
+        
+        if isinstance(observables, (list, tuple)):
+            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
+        elif isinstance(observables, Callable):
+            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
+        else:
+            raise ValueError(f"observables must either be a list or function; got `{observables}`")
     
     def __call__(self, inputs = None):
         """Construct the circuit and pass parameters.
@@ -44,6 +52,10 @@ class QuantumCircuit:
         The argument `inputs` is required for compatibility with with `KerasLayer` or `TorchLayer`. The default `None` value allows this class to be used without specifying inputs (if designed with proper error handling). The index of `inputs` within the argument sequence does not matter, just as long as the name is reserved.
         """
         raise NotImplementedError()
+    
+    def measure(self):
+        """Returns list of expectations across all observables."""
+        return [qml.expval(o) for o in self.observables]
 
     def device(self, *args, **kwargs):
         """Helper for creating a `qml.device` object from the current circuit."""
@@ -82,7 +94,7 @@ class QuantumCircuit:
         
         Note 1: The returned shape does not include the batch dimension.
         """
-        raise NotImplementedError()
+        return (len(self.observables),)
 
     @property
     def input_shape(self):
@@ -108,16 +120,12 @@ class AgentCircuit(QuantumCircuit):
         observables: list | Callable[[list], list],
         initial_state_vector: str | list = None,
         ):
-        super().__init__(wires=wires)
+        super().__init__(
+            wires=wires,
+            observables=observables,
+            )
         self.n_layers = n_layers
         self.initial_state_vector = initial_state_vector
-        
-        if isinstance(observables, (list, tuple)):
-            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
-        elif isinstance(observables, Callable):
-            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
-        else:
-            raise ValueError(f"observables must either be a list or function; got `{observables}`")
 
     def __call__(self, weights_var, weights_enc, inputs=None):
 
@@ -141,12 +149,8 @@ class AgentCircuit(QuantumCircuit):
             wires=self.wires,
             )
         
-        # Build dynamic list of measurements.
-        measurements = []
-        for o in self.observables:
-            measurements.append(qml.expval(o))
-
-        return measurements
+        # Return measurements.
+        return self.measure()
     
     @property
     def shape(self):
@@ -187,18 +191,14 @@ class MARLCircuit(QuantumCircuit):
         observables: list | Callable[[list], list],
         initial_state_vector: str | list = None,
         ):
-        super().__init__(wires=list(range(n_agents * d_qubits)))
+        super().__init__(
+            wires=list(range(n_agents * d_qubits)),
+            observables=observables,
+            )
         self.n_agents = n_agents
         self.d_qubits = d_qubits
         self.n_layers = n_layers
         self.initial_state_vector = initial_state_vector
-        
-        if isinstance(observables, (list, tuple)):
-            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
-        elif isinstance(observables, Callable):
-            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
-        else:
-            raise ValueError(f"observables must either be a list or function; got `{observables}`")
 
     def __call__(self, 
         agents_var_thetas: NDArray,
@@ -247,24 +247,12 @@ class MARLCircuit(QuantumCircuit):
                 wires=self.wires[qidx:qidx + self.d_qubits],
             )
 
-        # Build dynamic list of measurements.
-        measurements = []
-        for o in self.observables:
-            measurements.append(qml.expval(o))
-
-        return measurements
+        # Return measurements.
+        return self.measure()
     
     @property
     def shape(self):
         return self.get_shape(self.n_agents, self.d_qubits, self.n_layers)
-    
-    @property
-    def output_shape(self):
-        """Returns number of observables at output.
-        
-        This is useful in combination with `qml.KerasLayer`.
-        """
-        return (len(self.observables),)
 
     @property
     def input_shape(self):

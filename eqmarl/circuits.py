@@ -1,5 +1,6 @@
 import pennylane as qml
 from pennylane import numpy as np
+from numpy.typing import NDArray
 
 from .observables import *
 from .ops import *
@@ -104,18 +105,19 @@ class AgentCircuit(QuantumCircuit):
     def __init__(self,
         wires,
         n_layers,
-        obs_func = None,
-        initial_state_vector: str|np.ndarray = None,
+        observables: list | Callable[[list], list],
+        initial_state_vector: str | list = None,
         ):
-        # self.wires = wires
-        # self.n_wires = len(wires)
         super().__init__(wires=wires)
         self.n_layers = n_layers
-        
-        if obs_func is None:
-            obs_func = lambda wires: TensorPauliZ(wires, 1, self.n_wires)
-        self.obs_func = obs_func
         self.initial_state_vector = initial_state_vector
+        
+        if isinstance(observables, (list, tuple)):
+            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
+        elif isinstance(observables, Callable):
+            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
+        else:
+            raise ValueError(f"observables must either be a list or function; got `{observables}`")
 
     def __call__(self, weights_var, weights_enc, inputs=None):
 
@@ -141,8 +143,7 @@ class AgentCircuit(QuantumCircuit):
         
         # Build dynamic list of measurements.
         measurements = []
-        obs = self.obs_func(self.wires)
-        for o in obs:
+        for o in self.observables:
             measurements.append(qml.expval(o))
 
         return measurements
@@ -157,7 +158,7 @@ class AgentCircuit(QuantumCircuit):
         
         This is useful in combination with `qml.KerasLayer`.
         """
-        return (len(self.obs_func(self.wires)),)
+        return (len(self.observables),)
 
     @property
     def input_shape(self):
@@ -180,25 +181,28 @@ class AgentCircuit(QuantumCircuit):
 class MARLCircuit(QuantumCircuit):
     
     def __init__(self,
-        n,
-        d,
+        n_agents,
+        d_qubits,
         n_layers,
-        obs_func = None,
-        initial_state_vector: str|np.ndarray = None,
+        observables: list | Callable[[list], list],
+        initial_state_vector: str | list = None,
         ):
-        super().__init__(wires=list(range(n * d)))
-        self.n_agents = n
-        self.d_qubits = d
+        super().__init__(wires=list(range(n_agents * d_qubits)))
+        self.n_agents = n_agents
+        self.d_qubits = d_qubits
         self.n_layers = n_layers
-        
-        if obs_func is None:
-            obs_func = lambda wires: TensorPauliZ(wires, self.n_agents, self.d_qubits)
-        self.obs_func = obs_func
         self.initial_state_vector = initial_state_vector
+        
+        if isinstance(observables, (list, tuple)):
+            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
+        elif isinstance(observables, Callable):
+            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
+        else:
+            raise ValueError(f"observables must either be a list or function; got `{observables}`")
 
     def __call__(self, 
-        agents_var_thetas: np.ndarray,
-        agents_enc_inputs: np.ndarray,
+        agents_var_thetas: NDArray,
+        agents_enc_inputs: NDArray,
         inputs = None, # Required for keras layer support; must have shape (batch, n_agents, d_qubits).
         ):
 
@@ -245,8 +249,7 @@ class MARLCircuit(QuantumCircuit):
 
         # Build dynamic list of measurements.
         measurements = []
-        obs = self.obs_func(self.wires)
-        for o in obs:
+        for o in self.observables:
             measurements.append(qml.expval(o))
 
         return measurements
@@ -261,7 +264,7 @@ class MARLCircuit(QuantumCircuit):
         
         This is useful in combination with `qml.KerasLayer`.
         """
-        return (len(self.obs_func(self.wires)),)
+        return (len(self.observables),)
 
     @property
     def input_shape(self):

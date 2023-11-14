@@ -217,7 +217,7 @@ def batched_experiment(
     return history
 
 
-def postprocess_circuit_measurements(x: NDArray) -> tuple[NDArray, NDArray[np.int32]]:
+def postprocess_circuit_measurements(x: NDArray) -> NDArray:
     """Postprocessing operations for circuit measurement results.
     
     Performs the following:
@@ -227,5 +227,19 @@ def postprocess_circuit_measurements(x: NDArray) -> tuple[NDArray, NDArray[np.in
     """
     x = softmax(x, axis=-1)
     x = np.argmax(x, axis=-1)
-    states, counts = np.unique(np.asarray(x), axis=0, return_counts=True)
-    return states, counts
+    return x
+
+
+def measurements_to_df(
+    x: NDArray,
+    row_key: str = 'experiment',
+    column_key: str = 'measurement',
+    ):
+    """Converts tensor of measurement results to a Pandas `DataFrame`.
+    
+    Index names for rows and columns can be given to override defaults.
+    """
+    df = pd.DataFrame.from_records(x)
+    df = df.rename_axis(index=row_key).T.rename_axis(index=column_key).T
+    return df
+

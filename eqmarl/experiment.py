@@ -3,11 +3,18 @@ from contextlib import contextmanager
 from matplotlib import pyplot as plt
 from typing import Any, Callable, Iterable
 import cirq
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import sympy
 from .types import *
+from .circuits import MARLCircuit, QuantumCircuit
+from .math import softmax
+from .observables import *
+
+import pennylane as qml
+# from pennylane import numpy as np
+import numpy as np # Must import numpy last to ensure no conflicts with PennyLane wrapper.
+from numpy.typing import NDArray
 
 # This flag globally disables all quantum circuit tests within the function `test_runner` (defined below).
 # Use this flag to prevent lots of tests from running and taking up significant execution time.
@@ -181,3 +188,44 @@ def test_runner(
     else:
         # Return the completed figure.
         return fig
+
+
+def batched_experiment(
+    func: Callable[[int], Any],
+    repetitions: int = 100,
+    batch_size: int = 16,
+    ) -> list:
+    """Calls a given function `repetitions` times in chunks of `batch_size` and returns collective results of call history.
+    
+    Target function requires one argument which is the current chunk size.
+    
+    Note that chunks may be different sizes based upon total number of repetitions.
+    """
+
+    # Divide runs into batched chunks.
+    history = []
+    for i in range(0, repetitions, batch_size):
+        # Ensure chunk size never causes total number of runs to exceed maximum.
+        chunk_size = min(repetitions - i, batch_size)
+        
+        # Call function for current batch.
+        x = func(chunk_size)
+        
+        # Preserve result.
+        history.extend(x)
+
+    return history
+
+
+def postprocess_circuit_measurements(x: NDArray) -> tuple[NDArray, NDArray[np.int32]]:
+    """Postprocessing operations for circuit measurement results.
+    
+    Performs the following:
+    - Softmax activation along last axis.
+    - Obtains index where softmax results are maximum on last axis.
+    - Determines number of unique combinations of argmax states across all measurement runs.
+    """
+    x = softmax(x, axis=-1)
+    x = np.argmax(x, axis=-1)
+    states, counts = np.unique(np.asarray(x), axis=0, return_counts=True)
+    return states, counts

@@ -1,3 +1,4 @@
+from typing import Callable
 import pennylane as qml
 # from pennylane import numpy as np
 import numpy as np
@@ -68,6 +69,21 @@ def AlternatingWeightedObservables(obs: NDArray, n_reps: int, weight: float = -1
     weights = np.asarray([weight**i for i in range(n_reps)])
     res = WeightedObservables(weights=weights, obs=obs)
     return res.reshape((-1,)) # Ensure final output is 1-dimensional.
+
+
+def GroupedObservables(
+    wires: list,
+    n_groups: int,
+    d_qubits: int,
+    func: Callable[[list], list] = lambda wires: PauliObservables(wires=wires, op=qml.PauliZ),
+    ) -> NDArray:
+    """Splits given wires into groups and applies a function which produces observables on the grouped wires."""
+    all_obs = []
+    for gidx in range(n_groups):
+        qidx = gidx * d_qubits # Starting qubit index for the specified group.
+        obs = func(wires[qidx:qidx+d_qubits])
+        all_obs.extend(obs)
+    return np.asarray(all_obs).reshape((-1,))
 
 
 def GroupedTensorObservables(

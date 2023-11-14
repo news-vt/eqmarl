@@ -243,3 +243,17 @@ def measurements_to_df(
     df = df.rename_axis(index=row_key).T.rename_axis(index=column_key).T
     return df
 
+
+
+def plot_discrete_results(
+    df: pd.DataFrame,
+    xlabel: str = 'Discrete Results',
+    ylabel: str = 'Counts',
+    ):
+    count_dict = df.value_counts().to_dict()
+    keys = [','.join(str(item) for item in keytup) for keytup in count_dict.keys()]
+    values = [count_dict[key] for key in count_dict.keys()]
+    ax = sns.barplot(x=keys, y=values)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    return ax

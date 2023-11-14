@@ -247,13 +247,15 @@ def measurements_to_df(
 
 def plot_discrete_results(
     df: pd.DataFrame,
+    ax, # Plot axis.
     xlabel: str = 'Discrete Results',
     ylabel: str = 'Counts',
     ):
     count_dict = df.value_counts().to_dict()
-    keys = [','.join(str(item) for item in keytup) for keytup in count_dict.keys()]
-    values = [count_dict[key] for key in count_dict.keys()]
-    ax = sns.barplot(x=keys, y=values)
+    keys = [','.join(str(item) for item in keytup) for keytup in sorted(count_dict.keys())]
+    values = [count_dict[key] for key in sorted(count_dict.keys())]
+    sns.barplot(x=keys, y=values, ax=ax)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
     return ax

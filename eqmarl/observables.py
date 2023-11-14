@@ -42,7 +42,7 @@ def TensorObservables(obs: NDArray) -> NDArray:
     if len(obs.shape) > 1:
         obs = [TensorObservables(o) for o in obs]
     else:
-        obs = reduce((lambda a, b: a @ b), obs) # Reduce to tensor product.
+        obs = [reduce((lambda a, b: a @ b), obs)] # Reduce to tensor product.
     return np.asarray(obs).reshape((-1,)) # Ensure final output is 1-dimensional. 
 
 
@@ -68,3 +68,48 @@ def AlternatingWeightedObservables(obs: NDArray, n_reps: int, weight: float = -1
     weights = np.asarray([weight**i for i in range(n_reps)])
     res = WeightedObservables(weights=weights, obs=obs)
     return res.reshape((-1,)) # Ensure final output is 1-dimensional.
+
+
+def GroupedTensorObservables(
+    wires: list,
+    n_groups: int,
+    d_qubits: int,
+    op: Operation = qml.PauliZ,
+    ) -> NDArray:
+    """Creates Pauli tensor product observables for groups of qubits.
+    
+    This is useful for multi-agent reinforcement learning (MARL).
+    """
+    all_obs = []
+    for gidx in range(n_groups):
+        qidx = gidx * d_qubits # Starting qubit index for the specified group.
+        obs = PauliObservables(wires=wires[qidx:qidx+d_qubits], op=op) # Z0, Z1, ..., Z(d-1)
+        obs = TensorObservables(obs) # Z0 @ Z1 @ ... @ Z(d-1)
+        all_obs.extend(obs)
+    return np.asarray(all_obs)
+
+
+def AlternatingGroupedTensorObservables(
+    wires: list,
+    n_groups: int,
+    d_qubits: int,
+    n_reps: int,
+    weight: float = -1.,
+    op: Operation = qml.PauliZ,
+    ) -> NDArray:
+    """Duplicates grouped Pauli tensor product observables for groups of qubits.
+    
+    This is useful for multi-agent reinforcement learning (MARL).
+    """
+    obs = GroupedTensorObservables(
+        wires=wires,
+        n_groups=n_groups,
+        d_qubits=d_qubits,
+        op=op,
+    )
+    obs = AlternatingWeightedObservables(
+        obs=obs,
+        n_reps=n_reps,
+        weight=weight,
+    )
+    return obs

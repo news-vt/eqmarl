@@ -46,7 +46,7 @@ def TensorObservables(obs: NDArray) -> NDArray:
     return np.asarray(obs).reshape((-1,)) # Ensure final output is 1-dimensional. 
 
 
-def WeightedObservables(weights: NDArray, obs: NDArray) -> NDArray:
+def WeightedObservables(obs: NDArray, weights: NDArray) -> NDArray:
     """Multiplies a list/matrix of weights by a list/matrix of observables.
     
     Creates a weighted Hamiltonian for each observable.
@@ -60,7 +60,7 @@ def WeightedObservables(weights: NDArray, obs: NDArray) -> NDArray:
     return res.reshape((-1,)) # Ensure final output is 1-dimensional.
 
 
-def AlternatingWeightedObservables(n_reps: int, obs: list, weight: float = -1.) -> list:
+def AlternatingWeightedObservables(obs: NDArray, n_reps: int, weight: float = -1.) -> list:
     """Duplicates observables in alternating fashion with $(-1)^i * O$ weight where $i$ is the repetition index.
     
     Returns a 1-dimensional list of weighted observables.

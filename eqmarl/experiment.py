@@ -1,7 +1,7 @@
 from __future__ import annotations
 from contextlib import contextmanager
 from matplotlib import pyplot as plt
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Literal
 import cirq
 import pandas as pd
 import seaborn as sns
@@ -230,12 +230,42 @@ def postprocess_measurements_bipolar_softmax(x: NDArray) -> NDArray:
 
 
 def postprocess_measurements_bipolar_binary(x: NDArray) -> NDArray:
-    """Postprocessing operations for bipolar (between -1 and +1) measurement results as binary values.
+    """Interprets bipolar (floats between -1 and +1) measurement results as binary values.
     
     Performs the following:
     - Any negative values are clipped to `0` and positive values (including zero) are clipped to `1`.
     """
+    x = np.asarray(x) # Ensure type is numpy array.
     x = np.asarray(x >= 0, dtype=int) # Anything negative is `0` and positive (including zero) is `1`.
+    return x
+
+
+def postprocess_measurements_binary_integer(x: NDArray, endian: Literal['l', 'little', 'b', 'big'] = 'l') -> NDArray:
+    """Interprets binary (0 or 1) measurement results as integer values.
+    
+    Performs the following:
+    - Converts binary values along last axis to integers using `endian` byteorder.
+    """
+    match endian[0].lower():
+        case 'l': # Little endian; 0b0101 = 5
+            idx = np.arange(x.shape[-1]-1, -1, -1)
+        case 'b': # Big endian; 0b0101 = 10
+            idx = np.arange(x.shape[-1])
+        case _: # Default throws error.
+            raise ValueError(f'Only l/little and b/big endian are supported; got {endian}')
+    x = x.dot(1 << idx) # Convert final axis to binary
+    return x
+
+
+def postprocess_measurements_bipolar_integer(x: NDArray, endian: Literal['little', 'big'] = 'little') -> NDArray:
+    """Interprets bipolar (floats between -1 and +1) measurement results as binary values.
+    
+    Performs the following:
+    - Any negative values are clipped to `0` and positive values (including zero) are clipped to `1`.
+    - Converts binary values along last axis to integers using `endian` byteorder.
+    """
+    x = postprocess_measurements_bipolar_binary(x) # Convert bipolar to binary.
+    x = postprocess_measurements_binary_integer(x, endian=endian) # Convert binary to integer.
     return x
 
 

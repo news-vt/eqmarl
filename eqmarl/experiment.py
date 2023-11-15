@@ -246,13 +246,14 @@ def postprocess_measurements_binary_integer(x: NDArray, endian: Literal['l', 'li
     Performs the following:
     - Converts binary values along last axis to integers using `endian` byteorder.
     """
+    assert isinstance(endian, str), f"Only l/little and b/big endian are supported; got {endian}"
     match endian[0].lower():
         case 'l': # Little endian; 0b0101 = 5
             idx = np.arange(x.shape[-1]-1, -1, -1)
         case 'b': # Big endian; 0b0101 = 10
             idx = np.arange(x.shape[-1])
         case _: # Default throws error.
-            raise ValueError(f'Only l/little and b/big endian are supported; got {endian}')
+            raise ValueError(f"Only l/little and b/big endian are supported; got {endian}")
     x = x.dot(1 << idx) # Convert final axis to binary
     return x
 

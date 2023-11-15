@@ -129,3 +129,26 @@ def AlternatingGroupedTensorObservables(
         weight=weight,
     )
     return obs
+
+
+
+### Functions to create specific observable combinations.
+
+
+def TensorObservables3(
+    # wires: list,
+    # op: Operation = qml.PauliZ,
+    obs: list,
+    ) -> NDArray:
+    """Creates 3 groups of tensor observables from a given list of observable operations.
+    
+    With W observables, one for each wire, the result will be:
+    - Z0 @ Z1 @ ... @ Z(W-1)
+    - Z0 @ Z1 @ ... @ ZW
+    - Z1 @ Z2 @ ... @ ZW
+    """
+    return np.asarray([
+            TensorObservables(obs[:-1]),
+            TensorObservables(obs),
+            TensorObservables(obs[1:]),
+        ]).reshape((-1,))

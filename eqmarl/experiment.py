@@ -290,11 +290,17 @@ def plot_df_unique_rows(
     ax, # Plot axis.
     xlabel: str = 'Discrete Results',
     ylabel: str = 'Counts',
+    highlight_matching: bool = True,
     ):
     count_dict = df.value_counts().to_dict()
     keys = [','.join(str(item) for item in keytup) for keytup in sorted(count_dict.keys())]
     values = [count_dict[key] for key in sorted(count_dict.keys())]
-    sns.barplot(x=keys, y=values, ax=ax)
+    if highlight_matching:
+        matching_keys = [k for k in keys if len(list(set(k.split(',')))) == 1]
+        colors = ['red' if (k in matching_keys) else 'grey' for k in keys]
+    else:
+        colors = [sns.color_palette()[0]] * len(keys)
+    sns.barplot(x=keys, y=values, ax=ax, palette=colors)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)

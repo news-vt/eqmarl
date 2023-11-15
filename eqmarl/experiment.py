@@ -217,16 +217,25 @@ def batched_experiment(
     return history
 
 
-def postprocess_circuit_measurements(x: NDArray) -> NDArray:
-    """Postprocessing operations for circuit measurement results.
+def postprocess_measurements_bipolar_softmax(x: NDArray) -> NDArray:
+    """Postprocessing operations for bipolar (between -1 and +1) measurement results as softmax with argmax combo.
     
     Performs the following:
     - Softmax activation along last axis.
     - Obtains index where softmax results are maximum on last axis.
-    - Determines number of unique combinations of argmax states across all measurement runs.
     """
     x = softmax(x, axis=-1)
     x = np.argmax(x, axis=-1)
+    return x
+
+
+def postprocess_measurements_bipolar_binary(x: NDArray) -> NDArray:
+    """Postprocessing operations for bipolar (between -1 and +1) measurement results as binary values.
+    
+    Performs the following:
+    - Any negative values are clipped to `0` and positive values (including zero) are clipped to `1`.
+    """
+    x = np.asarray(x >= 0, dtype=int) # Anything negative is `0` and positive (including zero) is `1`.
     return x
 
 
@@ -245,7 +254,7 @@ def measurements_to_df(
 
 
 
-def plot_discrete_results(
+def plot_df_unique_rows(
     df: pd.DataFrame,
     ax, # Plot axis.
     xlabel: str = 'Discrete Results',

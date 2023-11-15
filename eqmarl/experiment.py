@@ -233,10 +233,10 @@ def postprocess_measurements_bipolar_binary(x: NDArray) -> NDArray:
     """Interprets bipolar (floats between -1 and +1) measurement results as binary values.
     
     Performs the following:
-    - Any negative values are clipped to `0` and positive values (including zero) are clipped to `1`.
+    - Any negative values are forced to `1` and positive values (including zero) are forced to `0`. This resembles the eigenstates of the Pauli Z operator.
     """
     x = np.asarray(x) # Ensure type is numpy array.
-    x = np.asarray(x >= 0, dtype=int) # Anything negative is `0` and positive (including zero) is `1`.
+    x = np.asarray(x < 0, dtype=int) # Anything negative is `1` and positive (including zero) is `0`.
     return x
 
 

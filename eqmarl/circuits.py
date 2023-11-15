@@ -31,18 +31,13 @@ class QuantumCircuit:
     
     def __init__(self, 
         wires: WireListType,
-        observables: list | Callable[[list], list],
+        observables: list | Callable[[list], list] | None = None,
         ):
         assert isinstance(wires, (list, tuple)), f'Wires must either be a list or tuple; got {wires}'
         self.wires = wires
         self.n_wires = len(wires)
         
-        if hasattr(observables, '__iter__') and not isinstance(observables, str):
-            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
-        elif isinstance(observables, Callable):
-            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
-        else:
-            raise ValueError(f"observables must either be a list or function; got `{observables}`")
+        self.set_observables(observables=observables)
     
     def __call__(self, inputs = None):
         """Construct the circuit and pass parameters.
@@ -53,9 +48,10 @@ class QuantumCircuit:
         """
         raise NotImplementedError()
     
-    def measure(self):
+    def measure(self) -> list | None:
         """Returns list of expectations across all observables."""
-        return [qml.expval(o) for o in self.observables]
+        if self.observables is not None:
+            return [qml.expval(o) for o in self.observables]
 
     def device(self, *args, **kwargs):
         """Helper for creating a `qml.device` object from the current circuit."""
@@ -108,7 +104,18 @@ class QuantumCircuit:
     @staticmethod
     def get_shape(*args, **kwargs):
         raise NotImplementedError()
-    
+
+
+    def set_observables(self, observables: list | Callable[[list], list] | None = None):
+        """Allows setting observables after circuit has been created."""
+        if observables is None:
+            self.observables = None
+        elif hasattr(observables, '__iter__') and not isinstance(observables, str):
+            self.observables = np.asarray(observables).tolist() # Ensure type is a Python list.
+        elif isinstance(observables, Callable):
+            self.observables = np.asarray(observables(self.wires)).tolist() # Ensure type is a Python list.
+        else:
+            raise ValueError(f"observables must either be a list or function; got `{observables}`")
     
 
 
@@ -117,7 +124,7 @@ class AgentCircuit(QuantumCircuit):
     def __init__(self,
         wires,
         n_layers,
-        observables: list | Callable[[list], list],
+        observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
         ):
         super().__init__(
@@ -127,7 +134,11 @@ class AgentCircuit(QuantumCircuit):
         self.n_layers = n_layers
         self.initial_state = initial_state
 
-    def __call__(self, weights_var, weights_enc, inputs=None):
+    def __call__(self,
+        weights_var,
+        weights_enc,
+        inputs=None,
+        ) -> NDArray | None:
 
         # Prepare initial state from function.
         if isinstance(self.initial_state, Callable):
@@ -192,7 +203,7 @@ class MARLCircuit(QuantumCircuit):
         n_agents,
         d_qubits,
         n_layers,
-        observables: list | Callable[[list], list],
+        observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
         ):
         super().__init__(
@@ -208,7 +219,7 @@ class MARLCircuit(QuantumCircuit):
         agents_var_thetas: NDArray,
         agents_enc_inputs: NDArray,
         inputs = None, # Required for keras layer support; must have shape (batch, n_agents, d_qubits).
-        ):
+        ) -> NDArray | None:
 
         # Prepare initial state from function.
         if isinstance(self.initial_state, Callable):

@@ -118,20 +118,24 @@ class AgentCircuit(QuantumCircuit):
         wires,
         n_layers,
         observables: list | Callable[[list], list],
-        initial_state_vector: str | list = None,
+        initial_state: list | Callable[[list], None] = None,
         ):
         super().__init__(
             wires=wires,
             observables=observables,
             )
         self.n_layers = n_layers
-        self.initial_state_vector = initial_state_vector
+        self.initial_state = initial_state
 
     def __call__(self, weights_var, weights_enc, inputs=None):
 
+        # Prepare initial state from function.
+        if isinstance(self.initial_state, Callable):
+            self.initial_state(self.wires)
+
         # Prepare initial state via state vector.
-        if self.initial_state_vector is not None:
-            qml.QubitStateVector(self.initial_state_vector, wires=self.wires)
+        elif hasattr(self.initial_state, '__iter__'):
+            qml.QubitStateVector(self.initial_state, wires=self.wires)
         
         # Encoding parameters.
         # If inputs were provided then do the following:
@@ -189,7 +193,7 @@ class MARLCircuit(QuantumCircuit):
         d_qubits,
         n_layers,
         observables: list | Callable[[list], list],
-        initial_state_vector: str | list = None,
+        initial_state: list | Callable[[list], None] = None,
         ):
         super().__init__(
             wires=list(range(n_agents * d_qubits)),
@@ -198,7 +202,7 @@ class MARLCircuit(QuantumCircuit):
         self.n_agents = n_agents
         self.d_qubits = d_qubits
         self.n_layers = n_layers
-        self.initial_state_vector = initial_state_vector
+        self.initial_state = initial_state
 
     def __call__(self, 
         agents_var_thetas: NDArray,
@@ -206,20 +210,13 @@ class MARLCircuit(QuantumCircuit):
         inputs = None, # Required for keras layer support; must have shape (batch, n_agents, d_qubits).
         ):
 
-        # Prepare initial state using pre-determined state-prep function.
-        if isinstance(self.initial_state_vector, str):
-            match self.initial_state_vector:
-                case 'phi+':
-                    entangle_agents_phi_plus(self.wires, self.d_qubits, self.n_agents)
-                case 'phi-':
-                    entangle_agents_phi_minus(self.wires, self.d_qubits, self.n_agents)
-                case 'psi+':
-                    entangle_agents_psi_plus(self.wires, self.d_qubits, self.n_agents)
-                case 'psi-':
-                    entangle_agents_psi_minus(self.wires, self.d_qubits, self.n_agents)
-        # OR, prepare initial state via state vector.
-        elif self.initial_state_vector is not None:
-            qml.QubitStateVector(self.initial_state_vector, wires=self.wires)
+        # Prepare initial state from function.
+        if isinstance(self.initial_state, Callable):
+            self.initial_state(self.wires)
+
+        # OR, prepare initial state via state vector/list.
+        elif hasattr(self.initial_state, '__iter__'):
+            qml.QubitStateVector(self.initial_state, wires=self.wires)
 
         # Create sub-circuit for each agent.
         for aidx in range(self.n_agents):

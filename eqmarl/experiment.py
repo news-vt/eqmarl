@@ -257,7 +257,7 @@ def postprocess_measurements_binary_integer(x: NDArray, endian: Literal['l', 'li
     return x
 
 
-def postprocess_measurements_bipolar_integer(x: NDArray, endian: Literal['little', 'big'] = 'little') -> NDArray:
+def postprocess_measurements_bipolar_integer(x: NDArray, endian: Literal['l', 'little', 'b', 'big'] = 'l') -> NDArray:
     """Interprets bipolar (floats between -1 and +1) measurement results as binary values.
     
     Performs the following:

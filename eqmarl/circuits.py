@@ -30,12 +30,16 @@ class QuantumCircuit:
     """
     
     def __init__(self, 
-        wires: WireListType,
+        wires: int | list[int],
         observables: list | Callable[[list], list] | None = None,
         ):
-        assert isinstance(wires, (list, tuple)), f'Wires must either be a list or tuple; got {wires}'
-        self.wires = wires
-        self.n_wires = len(wires)
+        if isinstance(wires, int):
+            self.wires = list(range(wires))
+        elif isinstance(wires, (list, tuple)):
+            self.wires = wires
+        else:
+            raise ValueError(f"Wires must either be an integer, list, or tuple; got {wires}")
+        self.n_wires = len(self.wires)
         
         self.set_observables(observables=observables)
     
@@ -131,8 +135,8 @@ class QuantumCircuit:
 class AgentCircuit(QuantumCircuit):
     
     def __init__(self,
-        wires,
-        n_layers,
+        wires: int | list[int],
+        n_layers: int,
         observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
         ):
@@ -206,7 +210,8 @@ class AgentCircuit(QuantumCircuit):
         return self.get_shape(self.wires, self.n_layers)
 
     @staticmethod
-    def get_shape(wires, n_layers):
+    def get_shape(wires: int | list[int], n_layers: int):
+        if isinstance(wires, int): wires = list(range(wires)) # Ensure wires is a list.
         return VariationalEncodingPQC.shape(
             n_layers=n_layers,
             wires=wires,
@@ -217,14 +222,14 @@ class AgentCircuit(QuantumCircuit):
 class MARLCircuit(QuantumCircuit):
     
     def __init__(self,
-        n_agents,
-        d_qubits,
-        n_layers,
+        n_agents: int,
+        d_qubits: int,
+        n_layers: int,
         observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
         ):
         super().__init__(
-            wires=list(range(n_agents * d_qubits)),
+            wires=n_agents * d_qubits,
             observables=observables,
             )
         self.n_agents = n_agents

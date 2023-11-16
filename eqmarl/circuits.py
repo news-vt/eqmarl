@@ -80,7 +80,9 @@ class QuantumCircuit:
 
         # Create quantum node using the current circuit as a callable.
         kwargs = dict(**kwargs, device=device) # Update kwargs to include device.
-        return qml.QNode(self, *args, **kwargs)
+        func: Callable = self.__call__
+        func.__func__.__name__ = self.__class__.__name__ # Duck type the class name as the function name.
+        return qml.QNode(func, *args, **kwargs)
 
     @property
     def weight_shapes(self) -> dict[str, tuple[int, ...]]:
@@ -98,7 +100,8 @@ class QuantumCircuit:
         
         Note 1: The returned shape does not include the batch dimension.
         """
-        return (len(self.observables),)
+        if self.observables is not None:
+            return (len(self.observables),)
 
     @property
     def input_shape(self) -> tuple[int,...]:
@@ -187,14 +190,6 @@ class AgentCircuit(QuantumCircuit):
             'weights_var': shape_var,
             'weights_enc': shape_enc,
         }
-    
-    @property
-    def output_shape(self):
-        """Returns number of observables at output.
-        
-        This is useful in combination with `qml.KerasLayer`.
-        """
-        return (len(self.observables),)
 
     @property
     def input_shape(self):

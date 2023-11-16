@@ -79,11 +79,15 @@ class QuantumCircuit:
         return qml.QNode(self, *args, **kwargs)
 
     @property
-    def shape(self):
-        raise NotImplementedError()
+    def weight_shapes(self) -> dict[str, tuple[int, ...]]:
+        """Returns a dictionary of shapes corresponding to trainable weights, the keys in the dictionary match the names of the parameters in the `__call__` function.
+        
+        The format of the dictionary should match that accepted by `qml.qnn.KerasLayer`.
+        """
+        return {} # Default returns an empty dictionary (i.e., no trainable weights).
     
     @property
-    def output_shape(self):
+    def output_shape(self) -> tuple[int,...]:
         """Returns number of observables at output.
         
         This is useful in combination with `qml.KerasLayer`.
@@ -93,18 +97,23 @@ class QuantumCircuit:
         return (len(self.observables),)
 
     @property
-    def input_shape(self):
+    def input_shape(self) -> tuple[int,...]:
         """Returns required shape for `inputs` argument.
 
         Note 1: The returned shape does not include the batch dimension.
         Note 2: PennyLane will compress inputs to 2D when batching for usage with `KerasLayer` or `TorchLayer`.
         """
         raise NotImplementedError()
-
-    @staticmethod
-    def get_shape(*args, **kwargs):
+    
+    @property
+    def shape(self) -> tuple[int,...] | tuple[tuple[int,...],...]:
+        """Returns shape of parameters for circuit, or tuple of shapes if multiple parameters exist."""
         raise NotImplementedError()
 
+    @staticmethod
+    def get_shape(*args, **kwargs) -> tuple[int,...] | tuple[tuple[int,...],...]:
+        """Returns shape of parameters for circuit, or tuple of shapes if multiple parameters exist."""
+        raise NotImplementedError()
 
     def set_observables(self, observables: list | Callable[[list], list] | None = None):
         """Allows setting observables after circuit has been created."""
@@ -168,8 +177,12 @@ class AgentCircuit(QuantumCircuit):
         return self.measure()
     
     @property
-    def shape(self):
-        return self.get_shape(self.wires, self.n_layers)
+    def weight_shapes(self):
+        shape_var, shape_enc = self.shape
+        return {
+            'weights_var': shape_var,
+            'weights_enc': shape_enc,
+        }
     
     @property
     def output_shape(self):
@@ -187,6 +200,10 @@ class AgentCircuit(QuantumCircuit):
         Note 2: PennyLane will compress inputs to 2D when batching for usage with `KerasLayer` or `TorchLayer`.
         """
         return (self.n_wires,)
+
+    @property
+    def shape(self):
+        return self.get_shape(self.wires, self.n_layers)
 
     @staticmethod
     def get_shape(wires, n_layers):
@@ -259,8 +276,12 @@ class MARLCircuit(QuantumCircuit):
         return self.measure()
     
     @property
-    def shape(self):
-        return self.get_shape(self.n_agents, self.d_qubits, self.n_layers)
+    def weight_shapes(self):
+        shape_var, shape_enc = self.shape
+        return {
+            'agents_var_thetas': shape_var,
+            'agents_enc_inputs': shape_enc,
+        }
 
     @property
     def input_shape(self):
@@ -271,13 +292,17 @@ class MARLCircuit(QuantumCircuit):
         """
         return (self.n_agents * self.d_qubits,)
 
+    @property
+    def shape(self):
+        return self.get_shape(self.n_agents, self.d_qubits, self.n_layers)
+
     @staticmethod
-    def get_shape(n, d, n_layers):
-        wires = list(range(n * d))
+    def get_shape(n_agents, d_qubits, n_layers):
+        wires = list(range(n_agents * d_qubits))
         shape_var, shape_enc = VariationalEncodingPQC.shape(
             n_layers=n_layers,
-            wires=wires[:d], # All agents are identical, so only need shape of first agent (wires 0, 1, ..., d-1).
+            wires=wires[:d_qubits], # All agents are identical, so only need shape of first agent (wires 0, 1, ..., d-1).
             )
-        shape_var = (n, *shape_var,)
-        shape_enc = (n, *shape_enc,)
+        shape_var = (n_agents, *shape_var,)
+        shape_enc = (n_agents, *shape_enc,)
         return shape_var, shape_enc

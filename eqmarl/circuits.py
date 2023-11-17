@@ -6,6 +6,11 @@ from .observables import *
 from .ops import *
 from .types import WireListType
 
+# Attempt to import TensorFlow.
+try:
+    import tensorflow as tf
+except ImportError:
+    pass
 
 
 class QuantumCircuit:
@@ -91,7 +96,15 @@ class QuantumCircuit:
         The format of the dictionary should match that accepted by `qml.qnn.KerasLayer`.
         """
         return {} # Default returns an empty dictionary (i.e., no trainable weights).
-    
+
+    @property
+    def weight_specs(self) -> dict[str, dict]:
+        """Returns a nested dictionary of arguments to initialize trainable weights, the keys in the dictionary match the names of the parameters in the `__call__` function.
+        
+        The format of the dictionary should match that accepted by `qml.qnn.KerasLayer.weight_specs` argument, and the Keras layers `add_weight()` function (https://www.tensorflow.org/api_docs/python/tf/keras/layers/Layer#add_weight).
+        """
+        return {}
+
     @property
     def output_shape(self) -> tuple[int,...]:
         """Returns number of observables at output.
@@ -192,6 +205,24 @@ class AgentCircuit(QuantumCircuit):
         }
 
     @property
+    def weight_specs(self):
+        return {
+            'weights_var': dict(
+                trainable=True,
+                dtype='float32',
+                initializer=tf.random_uniform_initializer(
+                    minval=0.,
+                    maxval=np.pi,
+                    ),
+                ),
+            'weights_enc': dict(
+                trainable=True,
+                dtype='float32',
+                initializer=tf.ones,
+                ),
+        }
+
+    @property
     def input_shape(self):
         """Returns required shape for `inputs` argument.
         
@@ -281,6 +312,24 @@ class MARLCircuit(QuantumCircuit):
         return {
             'agents_var_thetas': shape_var,
             'agents_enc_inputs': shape_enc,
+        }
+
+    @property
+    def weight_specs(self):
+        return {
+            'agents_var_thetas': dict(
+                trainable=True,
+                dtype='float32',
+                initializer=tf.random_uniform_initializer(
+                    minval=0.,
+                    maxval=np.pi,
+                    ),
+                ),
+            'agents_enc_inputs': dict(
+                trainable=True,
+                dtype='float32',
+                initializer=tf.ones,
+                ),
         }
 
     @property

@@ -146,6 +146,23 @@ class QuantumCircuit:
         else:
             raise ValueError(f"observables must either be a list or function; got `{observables}`")
     
+    def get_keras_layer(self, **kwargs):
+        """Constructs a `qml.qnn.KerasLayer` instance from the circuit using existing parameter shapes, specs, and output dimension.
+        
+        Keyword arguments are passed directly to `qml.qnn.KerasLayer.__init__`.
+        """
+        # Create a default QNode if none was given.
+        qnode = kwargs.pop('qnode', self.qnode())
+        
+        # Wrap keyword arguments into single dictionary to prevent duplicate keys (uses last key provided if duplicates exist).
+        kwargs = dict(
+            qnode=qnode,
+            weight_shapes=self.weight_shapes,
+            output_dim=self.output_shape,
+            weight_specs=self.weight_specs,
+            **kwargs,
+        )
+        return qml.qnn.KerasLayer(**kwargs)
 
 
 class AgentCircuit(QuantumCircuit):

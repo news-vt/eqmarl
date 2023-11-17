@@ -1,3 +1,4 @@
+from typing import Optional
 import pennylane as qml
 from pennylane import numpy as np
 from numpy.typing import NDArray
@@ -162,7 +163,13 @@ class QuantumCircuit:
             weight_specs=self.weight_specs,
             **kwargs,
         )
-        return qml.qnn.KerasLayer(**kwargs)
+        layer = qml.qnn.KerasLayer(**kwargs)
+
+        # Force set the input and output shapes of the layer.
+        layer.input_shape: tf.TensorShape = tf.TensorShape((None, *self.input_shape))
+        layer.output_shape: tf.TensorShape = tf.TensorShape((None, *self.output_shape))
+
+        return layer
 
 
 class AgentCircuit(QuantumCircuit):

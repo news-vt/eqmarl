@@ -301,23 +301,29 @@ class MARLCircuit(QuantumCircuit):
         elif hasattr(self.initial_state, '__iter__'):
             qml.QubitStateVector(self.initial_state, wires=self.wires)
 
+
+        # Setup encoding parameters for all agents.
+        # If inputs were provided then do the following:
+        # - Treat `enc_inputs` as lambda values which are multiplied by `inputs`.
+        # - `agents_enc_inputs` will NOT have a batch dimension
+        # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
+        if inputs is not None:
+            inputs = np.reshape(inputs, (-1, self.n_agents, self.d_qubits)) # Ensure shape is 3D with (batch, n_agents, d_qubits)
+            # ORIGINAL WAY::::   weights_enc = np.einsum("alqf,baq->baqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+            weights_enc_all = np.einsum("alqf,baq->balqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+        else:
+            weights_enc_all = agents_enc_inputs
+
+
         # Create sub-circuit for each agent.
         for aidx in range(self.n_agents):
             qidx = aidx * self.d_qubits # Starting qubit index for the specified agent.
             
-            # Variational parameters (batching is optional).
+            # Variational parameters for current agent (batching is optional).
             weights_var = agents_var_thetas[..., aidx, :, :, :]
             
-            # Encoding parameters.
-            # If inputs were provided then do the following:
-            # - Treat `enc_inputs` as lambda values which are multiplied by `inputs`.
-            # - `agents_enc_inputs` will NOT have a batch dimension
-            # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
-            if inputs is not None:
-                inputs = np.reshape(inputs, (-1, self.n_agents, self.d_qubits)) # Ensure shape is 3D with (batch, n_agents, d_qubits)
-                weights_enc = np.einsum("alqf,baq->baqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
-            else:
-                weights_enc = agents_enc_inputs[..., aidx, :, :, :]
+            # Encoding parameters for current agent.
+            weights_enc = weights_enc_all[..., aidx, :, :, :]
             
             # Add PQC for the wires corresponding to the current agent.
             VariationalEncodingPQC(

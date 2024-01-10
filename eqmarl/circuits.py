@@ -207,8 +207,8 @@ class AgentCircuit(QuantumCircuit):
         # - `agents_enc_inputs` will NOT have a batch dimension
         # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
         if inputs is not None:
-            inputs = np.reshape(inputs, (-1, self.n_wires)) # Ensure shape is 2D with (batch, d_qubits)
-            weights_enc = np.einsum("lqf,bq->blqf", weights_enc, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+            inputs = tf.reshape(inputs, (-1, self.n_wires)) # Ensure shape is 2D with (batch, d_qubits)
+            weights_enc = tf.einsum("lqf,bq->blqf", weights_enc, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
         
         VariationalEncodingPQC(
             weights_var=weights_var,
@@ -308,9 +308,9 @@ class MARLCircuit(QuantumCircuit):
         # - `agents_enc_inputs` will NOT have a batch dimension
         # - `inputs` will be 2D with shape (batch, n_agents * d_qubits).
         if inputs is not None:
-            inputs = np.reshape(inputs, (-1, self.n_agents, self.d_qubits)) # Ensure shape is 3D with (batch, n_agents, d_qubits)
+            inputs = tf.reshape(inputs, (-1, self.n_agents, self.d_qubits)) # Ensure shape is 3D with (batch, n_agents, d_qubits)
             # ORIGINAL WAY::::   weights_enc = np.einsum("alqf,baq->baqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
-            weights_enc_all = np.einsum("alqf,baq->balqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
+            weights_enc_all = tf.einsum("alqf,baq->balqf", agents_enc_inputs, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
         else:
             weights_enc_all = agents_enc_inputs
 

@@ -179,6 +179,7 @@ class AgentCircuit(QuantumCircuit):
         n_layers: int,
         observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
+        decompose: bool = False,
         ):
         super().__init__(
             wires=wires,
@@ -186,6 +187,7 @@ class AgentCircuit(QuantumCircuit):
             )
         self.n_layers = n_layers
         self.initial_state = initial_state
+        self.decompose_on_call = decompose
 
     def __call__(self,
         weights_var,
@@ -210,12 +212,25 @@ class AgentCircuit(QuantumCircuit):
             inputs = tf.reshape(inputs, (-1, self.n_wires)) # Ensure shape is 2D with (batch, d_qubits)
             weights_enc = tf.einsum("lqf,bq->blqf", weights_enc, inputs) # For each agent, encode each `input` state feature `q` on the `q-th` qubit and repeat encoding on same qubit for every layer `l`. Number of input features must match number of qubits.
         
-        VariationalEncodingPQC(
-            weights_var=weights_var,
-            weights_enc=weights_enc,
-            n_layers=self.n_layers,
-            wires=self.wires,
-            )
+        # Create circuit via standard method.
+        if not self.decompose_on_call:
+            VariationalEncodingPQC(
+                weights_var=weights_var,
+                weights_enc=weights_enc,
+                n_layers=self.n_layers,
+                wires=self.wires,
+                )
+        # Create circuit via decomposition.
+        else:
+            VariationalEncodingPQC.compute_decomposition(
+                weights_var=weights_var,
+                weights_enc=weights_enc,
+                n_layers=self.n_layers,
+                wires=self.wires,
+                variational_layer=VariationalEncodingPQC._hyperparameters['variational_layer'],
+                encoding_layer=VariationalEncodingPQC._hyperparameters['encoding_layer'],
+                entangling_layer=VariationalEncodingPQC._hyperparameters['entangling_layer'],
+                )
         
         # Return measurements.
         return self.measure()
@@ -277,6 +292,7 @@ class MARLCircuit(QuantumCircuit):
         n_layers: int,
         observables: list | Callable[[list], list] | None = None,
         initial_state: list | Callable[[list], None] = None,
+        decompose: bool = False,
         ):
         super().__init__(
             wires=n_agents * d_qubits,
@@ -286,6 +302,7 @@ class MARLCircuit(QuantumCircuit):
         self.d_qubits = d_qubits
         self.n_layers = n_layers
         self.initial_state = initial_state
+        self.decompose_on_call = decompose
 
     def __call__(self, 
         agents_var_thetas: NDArray,
@@ -326,12 +343,25 @@ class MARLCircuit(QuantumCircuit):
             weights_enc = weights_enc_all[..., aidx, :, :, :]
             
             # Add PQC for the wires corresponding to the current agent.
-            VariationalEncodingPQC(
-                weights_var=weights_var,
-                weights_enc=weights_enc,
-                n_layers=self.n_layers,
-                wires=self.wires[qidx:qidx + self.d_qubits],
-            )
+            # Create circuit via standard method.
+            if not self.decompose_on_call:
+                VariationalEncodingPQC(
+                    weights_var=weights_var,
+                    weights_enc=weights_enc,
+                    n_layers=self.n_layers,
+                    wires=self.wires[qidx:qidx + self.d_qubits],
+                )
+            # Create circuit via decomposition.
+            else:
+                VariationalEncodingPQC.compute_decomposition(
+                    weights_var=weights_var,
+                    weights_enc=weights_enc,
+                    n_layers=self.n_layers,
+                    wires=self.wires[qidx:qidx + self.d_qubits],
+                    variational_layer=VariationalEncodingPQC._hyperparameters['variational_layer'],
+                    encoding_layer=VariationalEncodingPQC._hyperparameters['encoding_layer'],
+                    entangling_layer=VariationalEncodingPQC._hyperparameters['entangling_layer'],
+                    )
 
         # Return measurements.
         return self.measure()

@@ -237,7 +237,7 @@ class VariationalEncodingPQC(Operation):
             op_list.extend(flatten_to_operations(encoding_layer(weights=weights_enc[..., l, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
 
         # Last variational layer at the end.
-        op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[..., l, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
+        op_list.extend(flatten_to_operations(variational_layer(weights=weights_var[..., l+1, :, :], wires=wires))) # Uses `...` notation to account for possible batch dimension.
 
         return op_list
 

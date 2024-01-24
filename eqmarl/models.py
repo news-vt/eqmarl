@@ -3,6 +3,8 @@ import tensorflow.keras as keras
 import functools as ft
 
 from .layers import *
+from .tools import *
+from .observables import *
 
 
 
@@ -27,21 +29,94 @@ def generate_model_CoinGame2_critic_classical(units: list[int], activation: str 
 
 
 def generate_model_CoinGame2_actor_quantum(
-    qubits,
-    n_agents,
-    d_qubits,
-    obs_shape, # i.e., (4,3,3)
     n_layers,
-    observables,
     beta = 1.0,
     name=None,
     ):
+    """Single-agent variant of hybrid quantum actor for CoinGame.
+    """
     
     def map_observable_to_vector(obs: tf.Tensor) -> tf.Tensor:
         """Converts an observable with shape `(...,x,y)` into `(...,x)` where the final dimension `y` is represented as a `sum({grid_y_val} * 2^{grid_y_length - grid_y_index})` for every column in all rows."""
         b = 2**tf.range(obs.shape[-1], dtype=obs.dtype) # Power of 2 that represents the column within the grid.
         return tf.tensordot(obs[...,::-1], b[::-1], 1)
 
+    # Shape of observables is already known for CoinGame2.
+    obs_shape = (4,3,3)
+
+    # Qubit dimension is pre-determined for CoinGame2 environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+    
+    # Generate observables.
+    observables = make_observables_CoinGame2(qubits)
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        # squash_activation='tanh',
+        squash_activation='arctan',
+        encoding_layer_cls=ParameterizedRotationLayer_RxRyRz,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(input_size,), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Reshape((*obs_shape,)), # Reshape to matrix grid.
+                keras.layers.Lambda(lambda x: map_observable_to_vector(x)), # converts (4,3,3) into (4,3)
+                ], name="input-preprocess"),
+            qlayer, # Hybrid quantum layer.
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                keras.layers.Softmax(),
+                ], name='observables-policy')
+        ], name=name)
+    return model
+
+
+def generate_model_CoinGame2_actor_quantum_partite(
+    n_agents,
+    n_layers,
+    beta = 1.0,
+    name=None,
+    ):
+    """eQMARL variant of hybrid quantum actor for CoinGame.
+    """
+    
+    def map_observable_to_vector(obs: tf.Tensor) -> tf.Tensor:
+        """Converts an observable with shape `(...,x,y)` into `(...,x)` where the final dimension `y` is represented as a `sum({grid_y_val} * 2^{grid_y_length - grid_y_index})` for every column in all rows."""
+        b = 2**tf.range(obs.shape[-1], dtype=obs.dtype) # Power of 2 that represents the column within the grid.
+        return tf.tensordot(obs[...,::-1], b[::-1], 1)
+
+    # Shape of observables is already known for CoinGame2.
+    obs_shape = (4,3,3)
+
+    # Qubit dimension is pre-determined for CoinGame2 environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(n_agents * d_qubits)
+
+    # Generate observables.
+    agent_obs = []
+    for aidx in range(n_agents):
+        qidx = aidx * d_qubits # Starting qubit index for the current partition.
+        obs = make_observables_CoinGame2(qubits[qidx:qidx+d_qubits])
+        agent_obs.append(obs)
+    observables = permute_observables(agent_obs) # Permute all combinations of agent observables.
+
+    # Define quantum layer.
     qlayer = HybridPartiteVariationalEncodingPQC(
         qubits=qubits, 
         n_parts=n_agents,
@@ -78,7 +153,7 @@ def generate_model_CoinGame2_actor_quantum(
     return model
 
 
-def generate_model_CoinGame2_qlearning_quantum(
+def generate_model_CoinGame2_qlearning_quantum_partite(
     qubits,
     n_agents,
     d_qubits,
@@ -87,6 +162,8 @@ def generate_model_CoinGame2_qlearning_quantum(
     observables,
     is_target,
     ):
+    """eQMARL variant of Q-learning agent for CoinGame.
+    """
     
     # n_wires = len(qubits)
     

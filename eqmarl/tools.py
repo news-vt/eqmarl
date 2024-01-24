@@ -4,10 +4,8 @@ import cirq
 import numpy as np
 import qutip
 import sympy
-import pennylane as qml
 from time import perf_counter
 from contextlib import contextmanager
-import functools
 import itertools
 
 

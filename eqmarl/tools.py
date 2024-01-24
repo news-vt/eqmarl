@@ -1,5 +1,4 @@
 from __future__ import annotations
-from itertools import chain
 from typing import Callable, Sequence
 import cirq
 import numpy as np
@@ -8,12 +7,21 @@ import sympy
 import pennylane as qml
 from time import perf_counter
 from contextlib import contextmanager
+import functools
+import itertools
 
 
 @contextmanager
 def catchtime() -> float:
     start = perf_counter()
     yield lambda: perf_counter() - start
+
+
+def permute_observables(observables: list[list]) -> list:
+    return [
+        functools.reduce(lambda x, y: x*y, obs)
+        for obs in itertools.product(*observables)
+        ]
 
 
 def flatten_to_operations(op: cirq.Operation | Sequence[cirq.Operation]) -> list[cirq.Operation]:
@@ -23,7 +31,7 @@ def flatten_to_operations(op: cirq.Operation | Sequence[cirq.Operation]) -> list
         return [op]
     # Sequence of operations, so convert to list and return.
     elif hasattr(op, '__iter__'):
-        return list(chain.from_iterable(flatten_to_operations(o) for o in op))
+        return list(itertools.chain.from_iterable(flatten_to_operations(o) for o in op))
     # Return operation as-is.
     else:
         raise ValueError(f'operation must be one of {{{cirq.Operation}, hasattr(__iter__)}} but received {type(op)}')

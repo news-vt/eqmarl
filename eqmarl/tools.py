@@ -17,13 +17,6 @@ def catchtime() -> float:
     yield lambda: perf_counter() - start
 
 
-def permute_observables(observables: list[list]) -> list:
-    return [
-        functools.reduce(lambda x, y: x*y, obs)
-        for obs in itertools.product(*observables)
-        ]
-
-
 def flatten_to_operations(op: cirq.Operation | Sequence[cirq.Operation]) -> list[cirq.Operation]:
     """Flattens a nested sequence of operations into a single list."""
     # Single operation, so return list of size 1.

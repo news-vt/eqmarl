@@ -15,6 +15,15 @@ import itertools
 def catchtime() -> float:
     start = perf_counter()
     yield lambda: perf_counter() - start
+    
+
+def generate_discrete_joint_action_map(n_agents: int, n_actions: int) -> list[tuple[int,...]]:
+    """Generates a list of tuples representing the joint actions for multiple agents in a discrete action space.
+    
+    For example, given an action space with 2 actions `[0, 1]`, the joint action map for 2 agents would be `[(0,0),(0,1),(1,0),(1,1)]`, where each index in the list represents a joint action index.
+    """
+    # Joint action --> per-agent action
+    return list(itertools.product(*list(itertools.repeat(list(range(n_actions)), n_agents))))
 
 
 def flatten_to_operations(op: cirq.Operation | Sequence[cirq.Operation]) -> list[cirq.Operation]:

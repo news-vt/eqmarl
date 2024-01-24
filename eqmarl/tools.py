@@ -6,20 +6,27 @@ import numpy as np
 import qutip
 import sympy
 import pennylane as qml
-from pennylane.operation import Operation
+from time import perf_counter
+from contextlib import contextmanager
 
 
-def flatten_to_operations(op: Operation | Sequence[Operation]) -> list[Operation]:
+@contextmanager
+def catchtime() -> float:
+    start = perf_counter()
+    yield lambda: perf_counter() - start
+
+
+def flatten_to_operations(op: cirq.Operation | Sequence[cirq.Operation]) -> list[cirq.Operation]:
     """Flattens a nested sequence of operations into a single list."""
     # Single operation, so return list of size 1.
-    if isinstance(op, Operation):
+    if isinstance(op, cirq.Operation):
         return [op]
     # Sequence of operations, so convert to list and return.
     elif hasattr(op, '__iter__'):
         return list(chain.from_iterable(flatten_to_operations(o) for o in op))
     # Return operation as-is.
     else:
-        raise ValueError(f'operation must be one of {{{Operation}, hasattr(__iter__)}} but received {type(op)}')
+        raise ValueError(f'operation must be one of {{{cirq.Operation}, hasattr(__iter__)}} but received {type(op)}')
 
 
 def extract_unitary_from_parameterized_circuit(

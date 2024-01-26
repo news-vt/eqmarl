@@ -102,6 +102,7 @@ class CoinGame2Trainer(EnvTrainer):
         n_episodes: int, # Number of episodes.
         controller: controllers.MARLController,
         reward_termination_threshold: float = None,
+        report_interval: int = 1, # Defaults to reporting every episode.
         ) -> dict[str, list]:
         
         episode_metrics_history = []
@@ -150,14 +151,14 @@ class CoinGame2Trainer(EnvTrainer):
                 episode_own_coin_rate_history.append(episode_metrics['episode_own_coin_rate'])
                 
                 # Report status at regular episodic intervals.
-                if (episode+1) % 10 == 0:
+                if report_interval is not None and (episode+1) % report_interval == 0:
                     avg_rewards = np.mean(episode_reward_history[-10:])
                     avg_discounted_rewards = np.mean(episode_discounted_reward_history[-10:])
                     avg_undiscounted_rewards = np.mean(episode_undiscounted_reward_history[-10:])
                     avg_coins_collected = np.mean(episode_coins_collected_history[-10:])
                     avg_own_coins_collected = np.mean(episode_own_coins_collected_history[-10:])
                     avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-10:])
-                    msg = "Episode {}/{}, average last 10 rewards {}".format(episode+1, n_episodes, avg_rewards)
+                    msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
                     msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
                     tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
                     print(msg, flush=True) # Print status message.

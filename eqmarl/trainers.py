@@ -12,6 +12,11 @@ class EnvTrainer:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def compute_episode_reward(self, interaction_history: list[dict]) -> float:
+        """Episode reward is the sum of all rewards per time step."""
+        rewards = np.array([d['rewards'] for d in interaction_history], dtype='float32') # Gather all rewards.
+        return np.sum(rewards)
+
     def run_episode(self, agent: agents.Agent) -> tuple[list[dict], dict]:
         raise NotImplementedError
 
@@ -27,13 +32,6 @@ class CoinGame2Trainer(EnvTrainer):
 
     def __init__(self, env_params):
         self.env = environments.coin_game.coin_game_make(env_params)
-
-
-    def compute_episode_reward(self, interaction_history: list[dict]) -> float:
-        """Episode reward is the sum of all rewards per time step."""
-        rewards = np.array([d['rewards'] for d in interaction_history], dtype='float32') # Gather all rewards.
-        return np.sum(rewards)
-
 
     def run_episode(self, multiagent: agents.MultiAgent) -> tuple[list[dict], dict]:
         """Runs a single episode in the training environment."""

@@ -6,3 +6,5 @@ from .environments import *
 from .layers import *
 from .models import *
 from .observables import *
+from .controllers import *
+from .trainers import *

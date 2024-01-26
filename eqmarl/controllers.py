@@ -91,47 +91,11 @@ class IAC(MARLController):
         return state_values
 
     def policy(self, states) -> tuple[list[int], list[tf.Tensor]]:
-        
         joint_action, joint_action_probs = tuple(zip(*[self.agent_policy(i, s) for i, s in enumerate(states)]))
-        
-        
-        # joint_action = [] # Actions for all agents.
-        # joint_action_probs = []
-        # # for i, (s, ma) in enumerate(zip(states, self.model_actors)):
-        # for i, s in enumerate(states):
-        #     # # Convert to tensor.
-        #     # s = tf.convert_to_tensor(s)
-        #     # s = tf.reshape(s, (1, *s.shape))
-            
-        #     # # pi(a | s)
-        #     # action_probs = ma(s)
-        #     # # print(f"[{i}] {action_probs.numpy()=}")
-        #     # # print(f"[{i}] {s.numpy()=}")
-            
-        #     # # Sample action from estimated probability distribution.
-        #     # action = np.random.choice(self.n_actions, p=np.squeeze(action_probs))
-        #     action, action_probs = self.agent_policy(i, s)
-            
-        #     # Add the current action to the joint action list.
-        #     joint_action.append(action)
-        #     joint_action_probs.append(action_probs)
         return joint_action, joint_action_probs
 
     def values(self, states) -> list[tf.Tensor]:
-        
         joint_state_values = [self.agent_value(i, s) for i, s in enumerate(states)]
-        
-        # joint_state_values = []
-        # for s, mc in zip(states, self.model_critics):
-        #     # Convert to tensor.
-        #     s = tf.convert_to_tensor(s)
-        #     s = tf.reshape(s, (1, *s.shape))
-
-        #     # V(s)
-        #     state_values = mc(s)
-
-        #     # Add the current state value to the joint values list.
-        #     joint_state_values.append(state_values)
         return joint_state_values
     
     def get_expected_returns(self,

@@ -147,6 +147,76 @@ def generate_model_CartPole_critic_quantum(
     return model
 
 
+def generate_model_CartPole_actor_quantum_partite(
+    n_agents,
+    n_layers,
+    beta = 1.0,
+    squash_activation = 'linear', # linear, arctan/atan, tanh
+    observables_type = 'normal', # None/normal, alternating/alt
+    name=None,
+    ):
+    """eQMARL variant of hybrid quantum actor for CartPole.
+    """
+    # State boundaries for input normalization.
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole..
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(n_agents * d_qubits)
+    
+    # Set observable generation function.
+    if observables_type is not None and observables_type.startswith('alt'):
+        observables_func = make_observables_CartPole_alternating
+    else:
+        observables_func = make_observables_CartPole
+
+    # Generate observables.
+    agent_obs = []
+    for aidx in range(n_agents):
+        qidx = aidx * d_qubits # Starting qubit index for the current partition.
+        obs = observables_func(qubits[qidx:qidx+d_qubits])
+        agent_obs.append(obs)
+    observables = permute_observables(agent_obs) # Permute all combinations of agent observables.
+
+    # Define quantum layer.
+    qlayer = HybridPartiteVariationalEncodingPQC(
+        qubits=qubits, 
+        n_parts=n_agents,
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        # squash_activation='tanh',
+        # squash_activation='arctan',
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(n_agents, input_size), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((n_agents, *obs_shape)), # Reshape to agent observations.
+                ], name="input-preprocess"),
+            qlayer,
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                keras.layers.Softmax(),
+                ], name='observables-policy')
+        ], name=name)
+    return model
+
+
+
 ###
 # CoinGame models.
 ###

@@ -73,7 +73,7 @@ class GymTrainer(EnvTrainer):
             action, action_probs = agent.policy(state)
 
             # Step through environment using joint action.
-            next_state, reward, done, _, _ = self.env.step(action)
+            next_state, reward, done, truncated, _ = self.env.step(action)
 
             # Preserve interaction.
             interaction = Interaction(
@@ -85,12 +85,13 @@ class GymTrainer(EnvTrainer):
                 done=done,
             )
             interaction_history.append(interaction)
+
+            # Break loop if environment has terminated.
+            if done or truncated:
+                break
             
             # Set next state.
             state = next_state
-
-            if done:
-                break
 
         # Preserve metrics as dictionary.
         metrics = dict(
@@ -144,7 +145,7 @@ class GymTrainer(EnvTrainer):
                 
                 # Report status at regular episodic intervals.
                 if report_interval is not None and (episode+1) % report_interval == 0:
-                    avg_rewards = np.mean(episode_reward_history[-10:])
+                    avg_rewards = np.mean(episode_reward_history[-report_interval:])
                     msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
                     tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
                     print(msg, flush=True) # Print status message.
@@ -290,12 +291,12 @@ class CoinGame2Trainer(EnvTrainer):
                 
                 # Report status at regular episodic intervals.
                 if report_interval is not None and (episode+1) % report_interval == 0:
-                    avg_rewards = np.mean(episode_reward_history[-10:])
-                    avg_discounted_rewards = np.mean(episode_discounted_reward_history[-10:])
-                    avg_undiscounted_rewards = np.mean(episode_undiscounted_reward_history[-10:])
-                    avg_coins_collected = np.mean(episode_coins_collected_history[-10:])
-                    avg_own_coins_collected = np.mean(episode_own_coins_collected_history[-10:])
-                    avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-10:])
+                    avg_rewards = np.mean(episode_reward_history[-report_interval:])
+                    avg_discounted_rewards = np.mean(episode_discounted_reward_history[-report_interval:])
+                    avg_undiscounted_rewards = np.mean(episode_undiscounted_reward_history[-report_interval:])
+                    avg_coins_collected = np.mean(episode_coins_collected_history[-report_interval:])
+                    avg_own_coins_collected = np.mean(episode_own_coins_collected_history[-report_interval:])
+                    avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-report_interval:])
                     msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
                     msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
                     tepisode.set_description(f"Episode {episode+1}") # Force next episode description.

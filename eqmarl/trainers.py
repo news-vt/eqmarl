@@ -168,7 +168,7 @@ class CoinGame2Trainer(EnvTrainer):
     def __init__(self, env_params):
         self.env = environments.coin_game.coin_game_make(env_params)
 
-    def run_episode(self, multiagent: agents.MultiAgent) -> tuple[list[dict], dict]:
+    def run_episode(self, multiagent: agents.MultiAgent) -> tuple[list[JointInteraction], dict]:
         """Runs a single episode in the training environment."""
         
         # Reset environment.
@@ -188,7 +188,7 @@ class CoinGame2Trainer(EnvTrainer):
             next_states, rewards, done, _ = self.env.step(joint_action)
 
             # Preserve interaction.
-            interaction = dict(
+            interaction = JointInteraction(
                 states=states,
                 joint_action=joint_action,
                 joint_action_probs=joint_action_probs,
@@ -254,11 +254,11 @@ class CoinGame2Trainer(EnvTrainer):
                 tepisode.set_postfix(**episode_metrics)
                 
                 # Update the models using the controller.
-                batched_rewards = np.array([d['rewards'] for d in episode_interaction_history], dtype='float32').squeeze()
-                batched_states = np.array([d['states'] for d in episode_interaction_history]).squeeze()
-                batched_next_states = np.array([d['next_states'] for d in episode_interaction_history]).squeeze()
-                batched_joint_actions = np.array([d['joint_action'] for d in episode_interaction_history]).squeeze()
-                batched_joint_action_probs = np.array([d['joint_action_probs'] for d in episode_interaction_history], dtype='float32').squeeze()
+                batched_rewards = np.array([ei.rewards for ei in episode_interaction_history], dtype='float32').squeeze()
+                batched_states = np.array([ei.states for ei in episode_interaction_history]).squeeze()
+                batched_next_states = np.array([ei.next_states for ei in episode_interaction_history]).squeeze()
+                batched_joint_actions = np.array([ei.joint_action for ei in episode_interaction_history]).squeeze()
+                batched_joint_action_probs = np.array([ei.joint_action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
 
                 batched_rewards = tf.convert_to_tensor(batched_rewards)
                 batched_states = tf.convert_to_tensor(batched_states)

@@ -165,8 +165,10 @@ class CoinGame2Trainer(EnvTrainer):
                     
                     # Terminate training if score reaches above threshold.
                     # This is to prevent over-training.
-                    if reward_termination_threshold is not None and avg_rewards > reward_termination_threshold:
+                    if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
                         break
+                
+                tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
         
         # Convert 'list of dicts' to 'dict of lists'.
         episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}

@@ -30,6 +30,128 @@ def generate_model_critic_classical(units: list[int], activation: str = 'relu', 
     return model
 
 
+
+###
+# CartPole models.
+###
+
+def generate_model_CartPole_actor_quantum(
+    n_layers,
+    beta = 1.0,
+    squash_activation = 'linear', # linear, arctan/atan, tanh
+    observables_type = 'normal', # None/normal, alternating/alt
+    name = None,
+    ):
+    """Single-agent variant of hybrid quantum actor for CartPole.
+    """
+    # State boundaries for input normalization.
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole..
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+    
+    # Generate observables.
+    if observables_type is not None and observables_type.startswith('alt'):
+        observables = make_observables_CartPole_alternating(qubits)
+    else:
+        observables = make_observables_CartPole(qubits)
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(input_size,), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((*obs_shape,)), # Reshape to matrix grid.
+                ], name="input-preprocess"),
+            qlayer, # Hybrid quantum layer.
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                keras.layers.Softmax(),
+                ], name='observables-policy')
+        ], name=name)
+    return model
+
+
+def generate_model_CartPole_critic_quantum(
+    n_layers,
+    beta = 1.0,
+    squash_activation = 'arctan', # linear, arctan/atan, tanh
+    name = None,
+    ):
+    """Single-agent variant of hybrid quantum actor for CartPole.
+    """
+    # State boundaries for input normalization.
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole..
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+    
+    # Generate observables.
+    observables = [
+        cirq.Z(qubits[0]) * cirq.Z(qubits[1]) * cirq.Z(qubits[2]) * cirq.Z(qubits[3]),
+        ]
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(input_size,), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((*obs_shape,)), # Reshape to matrix grid.
+                ], name="input-preprocess"),
+            qlayer, # Hybrid quantum layer.
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                # keras.layers.Softmax(),
+                ], name='observables-value')
+        ], name=name)
+    return model
+
+
+###
+# CoinGame models.
+###
+
+
 def generate_model_CoinGame2_actor_quantum(
     n_layers,
     beta = 1.0,

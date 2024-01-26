@@ -3,7 +3,7 @@ import tensorflow as tf
 from tqdm import tqdm, trange
 
 from . import environments
-from . import controllers
+from . import agents
 
 
 class EnvTrainer:
@@ -12,12 +12,12 @@ class EnvTrainer:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def run_episode(self, controller: controllers.RLController) -> tuple[list[dict], dict]:
+    def run_episode(self, agent: agents.Agent) -> tuple[list[dict], dict]:
         raise NotImplementedError
 
     def train(self,
         n_episodes: int, # Number of episodes.
-        controller,
+        agent: agents.Agent,
         ) -> dict[str, list]:
         raise NotImplementedError
 
@@ -35,7 +35,7 @@ class CoinGame2Trainer(EnvTrainer):
         return np.sum(rewards)
 
 
-    def run_episode(self, controller: controllers.MARLController) -> tuple[list[dict], dict]:
+    def run_episode(self, multiagent: agents.MultiAgent) -> tuple[list[dict], dict]:
         """Runs a single episode in the training environment."""
         
         # Reset environment.
@@ -49,7 +49,7 @@ class CoinGame2Trainer(EnvTrainer):
             ####
 
             # Get the 
-            joint_action, joint_action_probs = controller.policy(states)
+            joint_action, joint_action_probs = multiagent.policy(states)
 
             # Step through environment using joint action.
             next_states, rewards, done, _ = self.env.step(joint_action)
@@ -100,7 +100,7 @@ class CoinGame2Trainer(EnvTrainer):
 
     def train(self,
         n_episodes: int, # Number of episodes.
-        controller: controllers.MARLController,
+        multiagent: agents.MultiAgent,
         reward_termination_threshold: float = None,
         report_interval: int = 1, # Defaults to reporting every episode.
         ) -> dict[str, list]:
@@ -116,7 +116,7 @@ class CoinGame2Trainer(EnvTrainer):
             for episode in tepisode:
                 tepisode.set_description(f"Episode {episode}")
                 
-                episode_interaction_history, episode_metrics = self.run_episode(controller=controller)
+                episode_interaction_history, episode_metrics = self.run_episode(multiagent=multiagent)
                 
                 tepisode.set_postfix(**episode_metrics)
                 
@@ -134,7 +134,7 @@ class CoinGame2Trainer(EnvTrainer):
                 batched_joint_action_probs = tf.convert_to_tensor(batched_joint_action_probs)
 
                 # Update controller.
-                controller.update(
+                multiagent.update(
                     batched_states,
                     batched_joint_actions,
                     batched_joint_action_probs,

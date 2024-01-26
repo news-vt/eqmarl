@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm, trange
+import gymnasium as gym
 from dataclasses import dataclass
 
 from . import environments
@@ -46,6 +47,119 @@ class EnvTrainer:
         agent: agents.Agent,
         ) -> dict[str, list]:
         raise NotImplementedError
+
+
+class GymTrainer(EnvTrainer):
+    
+    def __init__(self,
+        env: gym.Env,
+        ):
+        self.env = env
+
+    def run_episode(self, agent: agents.Agent) -> tuple[list[Interaction], dict]:
+        """Runs a single episode in the training environment."""
+        
+        # Reset environment.
+        state = self.env.reset()
+
+        interaction_history: list[dict] = []
+        while True:
+
+            ####
+            ### Interact with environment
+            ####
+
+            # Get the 
+            action, action_probs = agent.policy(state)
+
+            # Step through environment using joint action.
+            next_state, rewards, done, _ = self.env.step(action)
+
+            # Preserve interaction.
+            interaction = Interaction(
+                state=state,
+                action=action,
+                action_probs=action_probs,
+                rewards=rewards,
+                next_state=next_state,
+                done=done,
+            )
+            interaction_history.append(interaction)
+            
+            # Set next state.
+            state = next_state
+
+            if done:
+                break
+
+        # Preserve metrics as dictionary.
+        metrics = dict(
+            episode_reward=self.compute_episode_reward(interaction_history),
+        )
+
+        return interaction_history, metrics
+
+
+    def train(self,
+        n_episodes: int, # Number of episodes.
+        agent: agents.Agent,
+        reward_termination_threshold: float = None,
+        report_interval: int = 1, # Defaults to reporting every episode.
+        ) -> dict[str, list]:
+        
+        episode_metrics_history = []
+        episode_reward_history = []
+        with trange(n_episodes, unit='episode') as tepisode:
+            for episode in tepisode:
+                tepisode.set_description(f"Episode {episode}")
+                
+                episode_interaction_history, episode_metrics = self.run_episode(agent=agent)
+                
+                tepisode.set_postfix(**episode_metrics)
+                
+                # Update the models using the controller.
+                batched_reward = np.array([ei.reward for ei in episode_interaction_history], dtype='float32').squeeze()
+                batched_state = np.array([ei.state for ei in episode_interaction_history]).squeeze()
+                batched_next_state = np.array([ei.next_state for ei in episode_interaction_history]).squeeze()
+                batched_actions = np.array([ei.action for ei in episode_interaction_history]).squeeze()
+                batched_action_probs = np.array([ei.action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
+
+                batched_reward = tf.convert_to_tensor(batched_reward)
+                batched_state = tf.convert_to_tensor(batched_state)
+                batched_next_state = tf.convert_to_tensor(batched_next_state)
+                batched_actions = tf.convert_to_tensor(batched_actions)
+                batched_action_probs = tf.convert_to_tensor(batched_action_probs)
+
+                # Update controller.
+                agent.update(
+                    batched_state,
+                    batched_actions,
+                    batched_action_probs,
+                    batched_next_state,
+                    batched_reward,
+                )
+                
+                episode_metrics_history.append(episode_metrics)
+                episode_reward_history.append(episode_metrics['episode_reward'])
+                
+                # Report status at regular episodic intervals.
+                if report_interval is not None and (episode+1) % report_interval == 0:
+                    avg_rewards = np.mean(episode_reward_history[-10:])
+                    msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
+                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                    print(msg, flush=True) # Print status message.
+                    
+                    # Terminate training if score reaches above threshold.
+                    # This is to prevent over-training.
+                    if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
+                        break
+                
+                tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+        
+        # Convert 'list of dicts' to 'dict of lists'.
+        episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
+        
+        return episode_metrics_history
 
 
 class CoinGame2Trainer(EnvTrainer):

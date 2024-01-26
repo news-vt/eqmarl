@@ -3,9 +3,11 @@ import tensorflow as tf
 from tqdm import tqdm, trange
 import gymnasium as gym
 from dataclasses import dataclass
+import itertools
 
 from . import environments
 from . import agents
+from . import tools
 
 @dataclass
 class Interaction:
@@ -173,6 +175,10 @@ class CoinGame2Trainer(EnvTrainer):
 
     def __init__(self, env_params):
         self.env = environments.coin_game.coin_game_make(env_params)
+        
+        # Joint action --> per-agent action
+        n_actions = 4 # CoinGame2 has 4 actions (north/south/east/west)
+        self.joint_action_map = tools.generate_discrete_joint_action_map(n_agents=self.env.nr_agents, n_actions=n_actions) # Maps joint action --> per-agent action
 
     def compute_episode_reward(self, interaction_history: list[JointInteraction]) -> float:
         """Episode reward is the sum of all rewards per time step."""
@@ -196,7 +202,8 @@ class CoinGame2Trainer(EnvTrainer):
             joint_action, joint_action_probs = multiagent.policy(states)
 
             # Step through environment using joint action.
-            next_states, rewards, done, _ = self.env.step(joint_action)
+            jam = self.joint_action_map[joint_action]
+            next_states, rewards, done, _ = self.env.step(jam)
 
             # Preserve interaction.
             interaction = JointInteraction(
@@ -308,6 +315,166 @@ class CoinGame2Trainer(EnvTrainer):
                         avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-report_interval:])
                         msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
                         msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
+                        tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                        print(msg, flush=True) # Print status message.
+                        
+                        # Terminate training if score reaches above threshold.
+                        # This is to prevent over-training.
+                        if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
+                            break
+                    
+                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+        except KeyboardInterrupt:
+            print(f"Terminating early at episode {episode}")
+        
+        # Convert 'list of dicts' to 'dict of lists'.
+        episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
+        
+        return episode_metrics_history
+
+
+
+
+
+
+#####################################
+
+
+class MultiGymTrainer(EnvTrainer):
+    """Train MARL models using CoinGame2 environment."""
+
+    def __init__(self,
+        envs: list[gym.Env],
+        n_actions: int, # Number of actions in one environment.
+        ):
+        self.envs = envs
+        self.n_envs = len(self.envs)
+        
+        # Joint action --> per-agent action
+        self.joint_action_map = list(itertools.product(*list(itertools.repeat(list(range(n_actions)), self.n_envs))))
+        
+
+    def compute_episode_reward(self, interaction_history: list[JointInteraction]) -> float:
+        """Episode reward is the sum of all rewards per time step."""
+        rewards = np.array([ei.rewards for ei in interaction_history], dtype='float32') # Gather all rewards individually for each agent (n_time_steps, n_agents).
+        return np.sum(rewards, axis=0) # Sum rewards for each agent individually.
+
+    def run_episode(self, multiagent: agents.MultiAgent) -> tuple[list[JointInteraction], dict]:
+        """Runs a single episode in the training environment."""
+        
+        # Reset environments.
+        states = []
+        for i in range(self.n_envs):
+            state, _ = self.envs[i].reset()
+            states.append(state)
+
+        interaction_history: list[dict] = []
+        while True:
+
+            ####
+            ### Interact with environment
+            ####
+
+            # Get the joint action.
+            joint_action, joint_action_probs = multiagent.policy(states)
+            
+            agent_actions = self.joint_action_map[joint_action]
+
+            # Step through environment using joint action.
+            rewards = []
+            dones = []
+            next_states = []
+            for i in range(self.n_envs):
+                next_state, reward, done, truncated, _ = self.envs[i].step(agent_actions[i])
+                
+                rewards.append(reward)
+                dones.append(done or truncated)
+                next_states.append(next_state)
+            # next_states, rewards, done, _ = self.env.step(joint_action)
+
+            # Preserve interaction.
+            interaction = JointInteraction(
+                states=states,
+                joint_action=joint_action,
+                joint_action_probs=joint_action_probs,
+                rewards=rewards,
+                next_states=next_states,
+                done=dones,
+            )
+            interaction_history.append(interaction)
+            
+            # Set next state.
+            states = next_states
+
+            if any(dones):
+                break
+
+        # Preserve metrics as dictionary.
+        agent_episode_reward = self.compute_episode_reward(interaction_history)
+        metrics = dict(
+            episode_reward=np.mean(agent_episode_reward), # Overall reward for the episode.
+            agent_episode_reward=agent_episode_reward, # Reward for each agent.
+        )
+
+        return interaction_history, metrics
+
+
+    def train(self,
+        n_episodes: int, # Number of episodes.
+        multiagent: agents.MultiAgent,
+        reward_termination_threshold: float = None,
+        report_interval: int = 1, # Defaults to reporting every episode.
+        ) -> dict[str, list]:
+        
+        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        
+        episode_metrics_history = []
+        episode_reward_history = []
+        
+        try:
+            with trange(n_episodes, unit='episode') as tepisode:
+                for episode in tepisode:
+                    tepisode.set_description(f"Episode {episode}")
+                    
+                    episode_interaction_history, episode_metrics = self.run_episode(multiagent=multiagent)
+                    
+                    tepisode.set_postfix(**episode_metrics)
+                    
+                    # Update the models using the controller.
+                    batched_rewards = np.array([ei.rewards for ei in episode_interaction_history], dtype='float32').squeeze()
+                    batched_states = np.array([ei.states for ei in episode_interaction_history]).squeeze()
+                    batched_next_states = np.array([ei.next_states for ei in episode_interaction_history]).squeeze()
+                    batched_joint_actions = np.array([ei.joint_action for ei in episode_interaction_history]).squeeze()
+                    batched_joint_action_probs = np.array([ei.joint_action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
+
+                    batched_rewards = tf.convert_to_tensor(batched_rewards)
+                    batched_states = tf.convert_to_tensor(batched_states)
+                    batched_next_states = tf.convert_to_tensor(batched_next_states)
+                    batched_joint_actions = tf.convert_to_tensor(batched_joint_actions)
+                    batched_joint_action_probs = tf.convert_to_tensor(batched_joint_action_probs)
+                    
+                    # print(f"{batched_rewards.shape=}")
+                    # print(f"{batched_states.shape=}")
+                    # print(f"{batched_next_states.shape=}")
+                    # print(f"{batched_joint_actions.shape=}")
+                    # print(f"{batched_joint_action_probs.shape=}")
+
+                    # Update controller.
+                    multiagent.update(
+                        batched_states,
+                        batched_joint_actions,
+                        batched_joint_action_probs,
+                        batched_next_states,
+                        batched_rewards,
+                    )
+                    
+                    episode_metrics_history.append(episode_metrics)
+                    episode_reward_history.append(episode_metrics['episode_reward'])
+
+                    # Report status at regular episodic intervals.
+                    if report_interval is not None and (episode+1) % report_interval == 0:
+                        avg_rewards = np.mean(episode_reward_history[-report_interval:])
+                        msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
                         tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
                         print(msg, flush=True) # Print status message.
                         

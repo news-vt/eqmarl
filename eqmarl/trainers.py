@@ -73,14 +73,14 @@ class GymTrainer(EnvTrainer):
             action, action_probs = agent.policy(state)
 
             # Step through environment using joint action.
-            next_state, rewards, done, _, _ = self.env.step(action)
+            next_state, reward, done, _, _ = self.env.step(action)
 
             # Preserve interaction.
             interaction = Interaction(
                 state=state,
                 action=action,
                 action_probs=action_probs,
-                rewards=rewards,
+                reward=reward,
                 next_state=next_state,
                 done=done,
             )

@@ -1,9 +1,20 @@
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm, trange
+from dataclasses import dataclass
 
 from . import environments
 from . import agents
+
+@dataclass
+class Interaction:
+    """Environment interaction."""
+    state: tf.Tensor
+    action: int
+    action_probs: tf.Tensor
+    reward: float
+    next_state: tf.Tensor
+    done: bool
 
 
 class EnvTrainer:

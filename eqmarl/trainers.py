@@ -16,6 +16,16 @@ class Interaction:
     next_state: tf.Tensor
     done: bool
 
+@dataclass
+class JointInteraction:
+    """Environment interaction."""
+    states: tf.Tensor
+    joint_action: int
+    joint_action_probs: tf.Tensor
+    rewards: float
+    next_states: tf.Tensor
+    done: bool
+
 
 class EnvTrainer:
     """Model training for specific environments."""

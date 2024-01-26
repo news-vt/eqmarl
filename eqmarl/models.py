@@ -6,9 +6,11 @@ from .layers import *
 from .tools import *
 from .observables import *
 
+###
+# General environment classical models.
+###
 
-
-def generate_model_CoinGame2_actor_classical(n_actions: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+def generate_model_actor_classical(n_actions: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
     assert type(units) == list, 'units must be a list of integers'
     layers = []
     layers += [keras.layers.Flatten()]
@@ -18,7 +20,7 @@ def generate_model_CoinGame2_actor_classical(n_actions: int, units: list[int], a
     return model
 
 
-def generate_model_CoinGame2_critic_classical(units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+def generate_model_critic_classical(units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
     assert type(units) == list, 'units must be a list of integers'
     layers = []
     layers += [keras.layers.Flatten()]

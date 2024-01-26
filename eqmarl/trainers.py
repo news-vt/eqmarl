@@ -101,6 +101,7 @@ class CoinGame2Trainer(EnvTrainer):
     def train(self,
         n_episodes: int, # Number of episodes.
         controller: controllers.MARLController,
+        reward_termination_threshold: float = None,
         ) -> dict[str, list]:
         
         episode_metrics_history = []
@@ -158,11 +159,12 @@ class CoinGame2Trainer(EnvTrainer):
                     avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-10:])
                     msg = "Episode {}/{}, average last 10 rewards {}".format(episode+1, n_episodes, avg_rewards)
                     msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
-                    print(msg, flush=True)
+                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                    print(msg, flush=True) # Print status message.
                     
                     # Terminate training if score reaches above threshold.
                     # This is to prevent over-training.
-                    if avg_rewards > 10:
+                    if reward_termination_threshold is not None and avg_rewards > reward_termination_threshold:
                         break
         
         # Convert 'list of dicts' to 'dict of lists'.

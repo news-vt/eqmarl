@@ -3,8 +3,8 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-class RLController:
-    """Reinforcement learning (RL) agent training controller.
+class Agent:
+    """Reinforcement learning (RL) agent.
     
     Handles training a single RL agent.
     """
@@ -25,8 +25,8 @@ class RLController:
         raise NotImplementedError
 
 
-class MARLController(RLController):
-    """Multi-agent reinforcement learning (MARL) training controller.
+class MultiAgent(Agent):
+    """Multi-agent reinforcement learning (MARL) training.
     
     Handles training multiple RL agents in tandem.
     """
@@ -45,8 +45,8 @@ class MARLController(RLController):
 
 
 
-class IAC(MARLController):
-    """Independent actor-critic (IAC) controller for MARL environments.
+class IAC(MultiAgent):
+    """Independent actor-critic (IAC) agents for MARL environments.
     
     In IAC, every agent has their own actor and critic models.
     """

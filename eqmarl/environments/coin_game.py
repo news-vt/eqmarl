@@ -246,18 +246,23 @@ class CoinGameEnvironment(Environment):
 
 def coin_game_make(params):
     domain_name = params["domain_name"]
-    params["gamma"] = 0.95
-    params["time_limit"] = 150
-    params["nr_actions"] = len(COIN_GAME_ACTIONS)
-    params["history_length"] = 1
-    params["view_range"] = 5
+    
+    default_params = {}
+    default_params["gamma"] = 0.95
+    default_params["time_limit"] = 150
+    default_params["nr_actions"] = len(COIN_GAME_ACTIONS)
+    default_params["history_length"] = 1
+    default_params["view_range"] = 5
     if domain_name == "CoinGame-2":
-        params["nr_agents"] = 2
-        params["width"] = 3
-        params["height"] = 3
+        default_params["nr_agents"] = 2
+        default_params["width"] = 3
+        default_params["height"] = 3
     if domain_name == "CoinGame-4":
-        params["nr_agents"] = 4
-        params["width"] = 5
-        params["height"] = 5
-    params["observation_dim"] = int(params["width"]*params["height"]*4)
-    return CoinGameEnvironment(params)
+        default_params["nr_agents"] = 4
+        default_params["width"] = 5
+        default_params["height"] = 5
+    default_params["observation_dim"] = int(default_params["width"]*default_params["height"]*4)
+    
+    kwargs = {**default_params, **params}
+    
+    return CoinGameEnvironment(kwargs)

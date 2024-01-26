@@ -60,7 +60,7 @@ class GymTrainer(EnvTrainer):
         """Runs a single episode in the training environment."""
         
         # Reset environment.
-        state = self.env.reset()
+        state, _ = self.env.reset()
 
         interaction_history: list[dict] = []
         while True:

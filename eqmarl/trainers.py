@@ -121,19 +121,19 @@ class GymTrainer(EnvTrainer):
                 batched_reward = np.array([ei.reward for ei in episode_interaction_history], dtype='float32').squeeze()
                 batched_state = np.array([ei.state for ei in episode_interaction_history]).squeeze()
                 batched_next_state = np.array([ei.next_state for ei in episode_interaction_history]).squeeze()
-                batched_actions = np.array([ei.action for ei in episode_interaction_history]).squeeze()
+                batched_action = np.array([ei.action for ei in episode_interaction_history]).squeeze()
                 batched_action_probs = np.array([ei.action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
 
                 batched_reward = tf.convert_to_tensor(batched_reward)
                 batched_state = tf.convert_to_tensor(batched_state)
                 batched_next_state = tf.convert_to_tensor(batched_next_state)
-                batched_actions = tf.convert_to_tensor(batched_actions)
+                batched_action = tf.convert_to_tensor(batched_action)
                 batched_action_probs = tf.convert_to_tensor(batched_action_probs)
 
                 # Update controller.
                 agent.update(
                     batched_state,
-                    batched_actions,
+                    batched_action,
                     batched_action_probs,
                     batched_next_state,
                     batched_reward,

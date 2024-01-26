@@ -108,54 +108,59 @@ class GymTrainer(EnvTrainer):
         report_interval: int = 1, # Defaults to reporting every episode.
         ) -> dict[str, list]:
         
+        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        
         episode_metrics_history = []
         episode_reward_history = []
-        with trange(n_episodes, unit='episode') as tepisode:
-            for episode in tepisode:
-                tepisode.set_description(f"Episode {episode}")
-                
-                episode_interaction_history, episode_metrics = self.run_episode(agent=agent)
-                
-                tepisode.set_postfix(**episode_metrics)
-                
-                # Update the models using the controller.
-                batched_reward = np.array([ei.reward for ei in episode_interaction_history], dtype='float32').squeeze()
-                batched_state = np.array([ei.state for ei in episode_interaction_history]).squeeze()
-                batched_next_state = np.array([ei.next_state for ei in episode_interaction_history]).squeeze()
-                batched_action = np.array([ei.action for ei in episode_interaction_history]).squeeze()
-                batched_action_probs = np.array([ei.action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
-
-                batched_reward = tf.convert_to_tensor(batched_reward)
-                batched_state = tf.convert_to_tensor(batched_state)
-                batched_next_state = tf.convert_to_tensor(batched_next_state)
-                batched_action = tf.convert_to_tensor(batched_action)
-                batched_action_probs = tf.convert_to_tensor(batched_action_probs)
-
-                # Update controller.
-                agent.update(
-                    batched_state,
-                    batched_action,
-                    batched_action_probs,
-                    batched_next_state,
-                    batched_reward,
-                )
-                
-                episode_metrics_history.append(episode_metrics)
-                episode_reward_history.append(episode_metrics['episode_reward'])
-                
-                # Report status at regular episodic intervals.
-                if report_interval is not None and (episode+1) % report_interval == 0:
-                    avg_rewards = np.mean(episode_reward_history[-report_interval:])
-                    msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
-                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
-                    print(msg, flush=True) # Print status message.
+        try:
+            with trange(n_episodes, unit='episode') as tepisode:
+                for episode in tepisode:
+                    tepisode.set_description(f"Episode {episode}")
                     
-                    # Terminate training if score reaches above threshold.
-                    # This is to prevent over-training.
-                    if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
-                        break
-                
-                tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                    episode_interaction_history, episode_metrics = self.run_episode(agent=agent)
+                    
+                    tepisode.set_postfix(**episode_metrics)
+                    
+                    # Update the models using the controller.
+                    batched_reward = np.array([ei.reward for ei in episode_interaction_history], dtype='float32').squeeze()
+                    batched_state = np.array([ei.state for ei in episode_interaction_history]).squeeze()
+                    batched_next_state = np.array([ei.next_state for ei in episode_interaction_history]).squeeze()
+                    batched_action = np.array([ei.action for ei in episode_interaction_history]).squeeze()
+                    batched_action_probs = np.array([ei.action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
+
+                    batched_reward = tf.convert_to_tensor(batched_reward)
+                    batched_state = tf.convert_to_tensor(batched_state)
+                    batched_next_state = tf.convert_to_tensor(batched_next_state)
+                    batched_action = tf.convert_to_tensor(batched_action)
+                    batched_action_probs = tf.convert_to_tensor(batched_action_probs)
+
+                    # Update controller.
+                    agent.update(
+                        batched_state,
+                        batched_action,
+                        batched_action_probs,
+                        batched_next_state,
+                        batched_reward,
+                    )
+                    
+                    episode_metrics_history.append(episode_metrics)
+                    episode_reward_history.append(episode_metrics['episode_reward'])
+                    
+                    # Report status at regular episodic intervals.
+                    if report_interval is not None and (episode+1) % report_interval == 0:
+                        avg_rewards = np.mean(episode_reward_history[-report_interval:])
+                        msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
+                        tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                        print(msg, flush=True) # Print status message.
+                        
+                        # Terminate training if score reaches above threshold.
+                        # This is to prevent over-training.
+                        if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
+                            break
+                    
+                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+        except KeyboardInterrupt:
+            print(f"Terminating early at episode {episode}")
         
         # Convert 'list of dicts' to 'dict of lists'.
         episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
@@ -244,6 +249,8 @@ class CoinGame2Trainer(EnvTrainer):
         report_interval: int = 1, # Defaults to reporting every episode.
         ) -> dict[str, list]:
         
+        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        
         episode_metrics_history = []
         episode_reward_history = []
         episode_discounted_reward_history = []
@@ -251,63 +258,67 @@ class CoinGame2Trainer(EnvTrainer):
         episode_coins_collected_history = []
         episode_own_coins_collected_history = []
         episode_own_coin_rate_history = []
-        with trange(n_episodes, unit='episode') as tepisode:
-            for episode in tepisode:
-                tepisode.set_description(f"Episode {episode}")
-                
-                episode_interaction_history, episode_metrics = self.run_episode(multiagent=multiagent)
-                
-                tepisode.set_postfix(**episode_metrics)
-                
-                # Update the models using the controller.
-                batched_rewards = np.array([ei.rewards for ei in episode_interaction_history], dtype='float32').squeeze()
-                batched_states = np.array([ei.states for ei in episode_interaction_history]).squeeze()
-                batched_next_states = np.array([ei.next_states for ei in episode_interaction_history]).squeeze()
-                batched_joint_actions = np.array([ei.joint_action for ei in episode_interaction_history]).squeeze()
-                batched_joint_action_probs = np.array([ei.joint_action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
-
-                batched_rewards = tf.convert_to_tensor(batched_rewards)
-                batched_states = tf.convert_to_tensor(batched_states)
-                batched_next_states = tf.convert_to_tensor(batched_next_states)
-                batched_joint_actions = tf.convert_to_tensor(batched_joint_actions)
-                batched_joint_action_probs = tf.convert_to_tensor(batched_joint_action_probs)
-
-                # Update controller.
-                multiagent.update(
-                    batched_states,
-                    batched_joint_actions,
-                    batched_joint_action_probs,
-                    batched_next_states,
-                    batched_rewards,
-                )
-                
-                episode_metrics_history.append(episode_metrics)
-                episode_reward_history.append(episode_metrics['episode_reward'])
-                episode_discounted_reward_history.append(episode_metrics['episode_discounted_reward'])
-                episode_undiscounted_reward_history.append(episode_metrics['episode_undiscounted_reward'])
-                episode_coins_collected_history.append(episode_metrics['episode_coins_collected'])
-                episode_own_coins_collected_history.append(episode_metrics['episode_own_coins_collected'])
-                episode_own_coin_rate_history.append(episode_metrics['episode_own_coin_rate'])
-                
-                # Report status at regular episodic intervals.
-                if report_interval is not None and (episode+1) % report_interval == 0:
-                    avg_rewards = np.mean(episode_reward_history[-report_interval:])
-                    avg_discounted_rewards = np.mean(episode_discounted_reward_history[-report_interval:])
-                    avg_undiscounted_rewards = np.mean(episode_undiscounted_reward_history[-report_interval:])
-                    avg_coins_collected = np.mean(episode_coins_collected_history[-report_interval:])
-                    avg_own_coins_collected = np.mean(episode_own_coins_collected_history[-report_interval:])
-                    avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-report_interval:])
-                    msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
-                    msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
-                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
-                    print(msg, flush=True) # Print status message.
+        
+        try:
+            with trange(n_episodes, unit='episode') as tepisode:
+                for episode in tepisode:
+                    tepisode.set_description(f"Episode {episode}")
                     
-                    # Terminate training if score reaches above threshold.
-                    # This is to prevent over-training.
-                    if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
-                        break
-                
-                tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                    episode_interaction_history, episode_metrics = self.run_episode(multiagent=multiagent)
+                    
+                    tepisode.set_postfix(**episode_metrics)
+                    
+                    # Update the models using the controller.
+                    batched_rewards = np.array([ei.rewards for ei in episode_interaction_history], dtype='float32').squeeze()
+                    batched_states = np.array([ei.states for ei in episode_interaction_history]).squeeze()
+                    batched_next_states = np.array([ei.next_states for ei in episode_interaction_history]).squeeze()
+                    batched_joint_actions = np.array([ei.joint_action for ei in episode_interaction_history]).squeeze()
+                    batched_joint_action_probs = np.array([ei.joint_action_probs for ei in episode_interaction_history], dtype='float32').squeeze()
+
+                    batched_rewards = tf.convert_to_tensor(batched_rewards)
+                    batched_states = tf.convert_to_tensor(batched_states)
+                    batched_next_states = tf.convert_to_tensor(batched_next_states)
+                    batched_joint_actions = tf.convert_to_tensor(batched_joint_actions)
+                    batched_joint_action_probs = tf.convert_to_tensor(batched_joint_action_probs)
+
+                    # Update controller.
+                    multiagent.update(
+                        batched_states,
+                        batched_joint_actions,
+                        batched_joint_action_probs,
+                        batched_next_states,
+                        batched_rewards,
+                    )
+                    
+                    episode_metrics_history.append(episode_metrics)
+                    episode_reward_history.append(episode_metrics['episode_reward'])
+                    episode_discounted_reward_history.append(episode_metrics['episode_discounted_reward'])
+                    episode_undiscounted_reward_history.append(episode_metrics['episode_undiscounted_reward'])
+                    episode_coins_collected_history.append(episode_metrics['episode_coins_collected'])
+                    episode_own_coins_collected_history.append(episode_metrics['episode_own_coins_collected'])
+                    episode_own_coin_rate_history.append(episode_metrics['episode_own_coin_rate'])
+                    
+                    # Report status at regular episodic intervals.
+                    if report_interval is not None and (episode+1) % report_interval == 0:
+                        avg_rewards = np.mean(episode_reward_history[-report_interval:])
+                        avg_discounted_rewards = np.mean(episode_discounted_reward_history[-report_interval:])
+                        avg_undiscounted_rewards = np.mean(episode_undiscounted_reward_history[-report_interval:])
+                        avg_coins_collected = np.mean(episode_coins_collected_history[-report_interval:])
+                        avg_own_coins_collected = np.mean(episode_own_coins_collected_history[-report_interval:])
+                        avg_own_coin_rate = np.mean(episode_own_coin_rate_history[-report_interval:])
+                        msg = "Episode {}/{}, average last {} rewards {}".format(episode+1, n_episodes, report_interval, avg_rewards)
+                        msg = f"{msg}: {avg_undiscounted_rewards=}, {avg_discounted_rewards=}, {avg_coins_collected=}, {avg_own_coins_collected=}, {avg_own_coin_rate=}"
+                        tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+                        print(msg, flush=True) # Print status message.
+                        
+                        # Terminate training if score reaches above threshold.
+                        # This is to prevent over-training.
+                        if reward_termination_threshold is not None and avg_rewards >= reward_termination_threshold:
+                            break
+                    
+                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+        except KeyboardInterrupt:
+            print(f"Terminating early at episode {episode}")
         
         # Convert 'list of dicts' to 'dict of lists'.
         episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}

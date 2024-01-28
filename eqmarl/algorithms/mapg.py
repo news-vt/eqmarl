@@ -35,16 +35,7 @@ class MAPG(Algorithm):
         env: gym.vector.VectorEnv, # Vectorized environment.
         model_policy: keras.Model, # One shared policy (each agent uses the same policy).
         optimizer_policy: Union[keras.optimizers.Optimizer, list[keras.optimizers.Optimizer]],
-        # model_actor: keras.Model, # One shared policy (each agent uses the same policy).
-        # model_critic: keras.Model, # One central critic.
-        # model_critic_target: keras.Model, # One central critic.
-        # optimizer_actor: Union[keras.optimizers.Optimizer, list[keras.optimizers.Optimizer]],
-        # optimizer_critic: Union[keras.optimizers.Optimizer, list[keras.optimizers.Optimizer]],
         gamma: float,
-        # steps_per_update: int, # Number of steps per model update.
-        # steps_per_target_update: int = None, # Number of steps per target model update.
-        # tau: float = None, # Rate at which to slowly update the target network, should be tau << 1.
-        # max_memory_length: int = 10000,
         episode_metrics_callback = None, # Called at the end of each episode to report metrics.
         ):
         assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"

@@ -1,3 +1,3 @@
 from .algorithm import *
 from .pg import PG
-from .mapg import *
+from .mapg import MAPG

@@ -125,14 +125,6 @@ class A2C(Algorithm):
         done_batched = tf.convert_to_tensor(done_batched)
         
         huber_loss = tf.keras.losses.Huber(reduction=keras.losses.Reduction.SUM)
-        
-        # # next_state_values = self.model_critic(next_state_batched) # V(s')
-        
-        # # Estimate discounted next-state values.
-        # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma, initial_value=next_state_values[-1], standardize=False)
-        # # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma)
-        # # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma, initial_value=0.)
-        # # returns = tf.reshape(returns, shape=state_values.shape)
 
         # Update the critic and actor networks simultaneously.
         with tf.GradientTape() as tape_critic, tf.GradientTape() as tape_actor:
@@ -148,93 +140,22 @@ class A2C(Algorithm):
             probs_of_chosen_actions = tf.gather_nd(action_probs, id_action_pairs) # (n_time_steps,)
             action_probs_log = tf.math.log(probs_of_chosen_actions) # (n_time_steps,)
             
-            # Estimate discounted next-state values.
-            # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma, initial_value=next_state_values[-1], standardize=False)
-            # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma)
-            # # returns = self.get_expected_returns(rewards=reward_batched, gamma=self.gamma, initial_value=0.)
-            # returns = tf.reshape(returns, shape=state_values.shape)
-            # print(f"{returns=}")
-            # print(f"{next_state_values[-1]=}")
-            # print(f"{x}")
-            
-            # returns = returns[::-1] # R(t0), R(t1), ...
-            
-            # returns = reward_batched + self.gamma * next_state_values
-            
-            
-            
-            # returns = []
-            # # discounted_sum = next_state_values[-1]
-            # discounted_sum = 0
-            # # print(r)
-            # # for t in reversed(range(reward_batched.shape[0])): # Iterate through rewards backwards.
-            # for r in reward_batched[::-1]: # Iterate through rewards backwards.
-            #     # print(f"{r=}, {discounted_sum=}")
-            #     discounted_sum = r + self.gamma * discounted_sum # Accumulate the discounted next-state value.
-            #     # returns[t] = r
-            #     returns.insert(0, discounted_sum)
-            # returns = tf.convert_to_tensor(returns, dtype='float32')
-            # returns = tf.reshape(returns, shape=state_values.shape)
-            # # print(f"{reward_batched=}")
-            # # print(f"{returns=}")
-            # # print(x)
-            # # print(f"{returns=}")
-            # # print(x)
-            # eps = np.finfo(np.float32).eps.item()
-            # returns = (returns - tf.math.reduce_mean(returns)) / (tf.math.reduce_std(returns) + eps)
-            # print(f"{returns_new=}")
-            # print(f"{returns=}")
-            # print(x) 
-            # print(f"{state_values.shape=}")
-            # print(f"{state_values=}")
-            # print(f"{returns.shape=}")
-            # print(f"{returns=}")
-            # print(f"{x}")
-            
-
+            # Ensure shapes are correct.
             reward_batched = tf.reshape(reward_batched, shape=state_values.shape)
             done_batched = tf.reshape(done_batched, shape=state_values.shape)
             action_probs_log = tf.reshape(action_probs_log, shape=state_values.shape)
 
-
             # Compute advantage via Q-value estimation.
-            # q_values = reward_batched + (1. - done_batched) * self.gamma * state_values
+            # Q(s, a) = r(s',a) + gamma * V(s')
             q_values = reward_batched + (1. - done_batched) * self.gamma * next_state_values
-            # q_values = np.zeros_like(state_values, dtype='float32')
-            # q_values[0] = state_values[0]
-            # for t in reversed(range(reward_batched.shape[0]-1)):
-            #     q_values[t] = reward_batched[t] + self.gamma * state_values[t]
-            # q_values = tf.convert_to_tensor(q_values, dtype='float32')
+            advantage = q_values - state_values # A(s, a) = Q(s, a) - V(s)
             
-            # advantage = returns - state_values # A(s, a) = r(s',a) + gamma * V(s') - V(s)
-            advantage = q_values - state_values # A(s, a) = r(s',a) + gamma * V(s') - V(s)
-            
-            
-            # Entropy.
-            # print(f"{action_probs.shape=}")
-            # print(f"{tf.reduce_mean(action_probs, axis=-1).shape=}")
-            # print(f"{tf.reduce_mean(action_probs, axis=-1)=}")
+            # Entropy to regularize actor loss.
             entropy = -tf.reduce_sum(action_probs * tf.math.log(action_probs), axis=-1)
-            # print(f"{entropy=}")
             entropy = tf.reduce_mean(entropy)
-            # print(f"{entropy=}")
-            # print(f"{x}")
-            
-            # print(f"{done_batched=}")
-            # print(f"{q_values=}")
-            # print(f"{reward_batched.shape=}")
-            # print(f"{done_batched.shape=}")
 
-            # print(f"{(action_probs_log * advantage).shape=}")
-            # print(f"{(action_probs_log).shape=}")
-            # print(f"{(advantage).shape=}")
-            # print(f"{x}")
-            
             actor_loss = tf.reduce_mean(-action_probs_log * advantage) + self.alpha * entropy
-            # critic_loss = huber_loss(state_values, returns) # Huber loss of advantage.
             critic_loss = huber_loss(state_values, q_values) # Huber loss of advantage.
-            # critic_loss = keras.losses.MSE(state_values, q_values)
-            # critic_loss = 0.5 * tf.reduce_mean(tf.pow(advantage, 2))
 
         # Compute gradients for the actor network.
         grads_actor = tape_actor.gradient(actor_loss, self.model_actor.trainable_variables)

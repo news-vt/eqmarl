@@ -32,7 +32,7 @@ class A2C(Algorithm):
     """
 
     def __init__(self,
-        env: gym.Env, # Vectorized environment.
+        env: gym.Env, # Standard gymnasium environment.
         model_actor: keras.Model, # One shared policy (each agent uses the same policy).
         model_critic: keras.Model, # One central critic.
         optimizer_actor: Union[keras.optimizers.Optimizer, list[keras.optimizers.Optimizer]],

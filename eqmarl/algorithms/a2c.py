@@ -76,36 +76,7 @@ class A2C(Algorithm):
         state_values = self.model_critic(s)
 
         return state_values
-    
-    @staticmethod
-    def get_expected_returns(
-        rewards: tf.Tensor,
-        gamma: float,
-        initial_value: float = 0., # Starting value for discounted sum.
-        standardize: bool = True,
-        ) -> tf.Tensor:
-        """Computes expected discounted returns.
-        
-        The discount factor `gamma` denotes how much past rewards have an influence on the future. Setting =1 means no discounting.
-        """
-        n_rewards = rewards.shape[0]
-        discounted_sum = initial_value
-        returns = np.zeros_like(rewards, dtype='float32')
-        for t in reversed(range(n_rewards)):
-            discounted_sum = rewards[t] + gamma * discounted_sum
-            returns[t] = discounted_sum
-        returns = tf.convert_to_tensor(returns, dtype='float32')
-        
-        # print(returns)
-        
-        if standardize:
-            eps = np.finfo(np.float32).eps.item()
-            returns = (returns - tf.math.reduce_mean(returns, axis=0)) / (tf.math.reduce_std(returns, axis=0) + eps)
-            
-        # print(returns)
-        # print(x)
-        
-        return returns
+
 
     def update(self, batch: list[Interaction]):
 

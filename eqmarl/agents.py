@@ -289,6 +289,110 @@ class IAC(MultiAgent):
 
 
 
+# class MAPG(MultiAgent):
+    
+#     def __init__(self,
+#         model_actor: Union[keras.Model, list[keras.Model]],
+#         model_critic: keras.Model, # One central critic.
+#         model_critic_target: keras.Model, # One central critic.
+#         optimizer_actor,
+#         optimizer_critic,
+#         gamma: float,
+#         ):
+
+#         self.model_actor = model_actor
+#         self.model_critic = model_critic
+#         self.model_critic_target = model_critic_target
+
+#         # If a single actor is provided then assume it is a joint policy.
+#         self.is_joint_policy = isinstance(self.model_actor, keras.models.Model) and not isinstance(self.model_actor, (list, tuple))
+
+#         # Initialize the target critic network.
+#         self.model_critic_target.set_weights(self.model_critic.get_weights())
+
+#     def policy(self, states) -> tuple[list[int], list[tf.Tensor]]:
+#         """Get policy estimation for each agent."""
+
+#         # Convert to tensor.
+#         s = tf.convert_to_tensor(states)
+#         s = tf.reshape(s, (1, *s.shape))
+
+#         # pi({a0, a1, ...} | {s0, s1, ...})
+#         joint_action_probs = self.model_actor(s)
+
+#         # Sample action from estimated probability distribution.
+#         joint_action = np.random.choice(self.n_joint_actions, p=np.squeeze(joint_action_probs))
+
+#         return joint_action, joint_action_probs
+
+#     def values(self, states) -> list[tf.Tensor]:
+#         # Convert to tensor.
+#         s = tf.convert_to_tensor(states)
+#         s = tf.reshape(s, (1, *s.shape))
+
+#         # V({s0, s1, ...})
+#         joint_state_values = self.model_critic(s)
+
+#         return joint_state_values
+
+#     def update(self, buffer: list):
+
+
+
+# class MADDPG_eQMARL(MultiAgent):
+#     # https://medium.com/machine-intelligence-and-deep-learning-lab/a-tutorial-on-maddpg-53241ae8aac
+#     # https://github.com/JohannesAck/tf2multiagentrl/blob/master/tf2marl/agents/maddpg.py
+#     # https://medium.com/analytics-vidhya/multi-agent-reinforcement-learning-openais-maddpg-a741c6cf3869
+    
+#     def __init__(self,
+#         model_actor: keras.Model, # One unified actor.
+#         model_actor_target: keras.Model, # One unified actor.
+#         model_critic: keras.Model, # One central critic.
+#         model_critic_target: keras.Model, # One central critic.
+#         gamma: float,
+#         optimizer_actor,
+#         optimizer_critic,
+#         n_actions: int,
+#         n_agents: int,
+#         ):
+#         super().__init__()
+#         self.model_actor = model_actor
+#         self.model_actor_target = model_actor_target
+#         self.model_critic_target = model_critic_target
+#         self.gamma = gamma
+#         self.optimizer_actor = optimizer_actor
+#         self.optimizer_critic = optimizer_critic
+#         self.n_actions = n_actions
+#         self.n_agents = n_agents
+        
+#         self.n_joint_actions = self.n_actions ** self.n_agents
+        
+#     def policy(self, states) -> tuple[list[int], list[tf.Tensor]]:
+
+#         # Convert to tensor.
+#         s = tf.convert_to_tensor(states)
+#         s = tf.reshape(s, (1, *s.shape))
+
+#         # pi({a0, a1, ...} | {s0, s1, ...})
+#         joint_action_probs = self.model_actor(s)
+
+#         # Sample action from estimated probability distribution.
+#         joint_action = np.random.choice(self.n_joint_actions, p=np.squeeze(joint_action_probs))
+
+#         return joint_action, joint_action_probs
+
+#     def values(self, states) -> list[tf.Tensor]:
+#         # Convert to tensor.
+#         s = tf.convert_to_tensor(states)
+#         s = tf.reshape(s, (1, *s.shape))
+
+#         # V({s0, s1, ...})
+#         joint_state_values = self.model_critic(s)
+
+#         return joint_state_values
+
+
+
 
 class eQMARL_AC(MultiAgent):
     """Multi-agent actor-critic (AC) using eQMARL setting.

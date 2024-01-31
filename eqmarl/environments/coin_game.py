@@ -4,8 +4,10 @@ This environment was gleaned from the work of Phan et al. 2022 (https://dl.acm.o
 The original source for this code can be found on GitHub at: https://github.com/thomyphan/emergent-cooperation/blob/main/mate/environments/coin_game.py
 """
 
+from typing import Union
 import numpy
 import random
+import gymnasium as gym
 
 class Environment:
 
@@ -266,3 +268,55 @@ def coin_game_make(params):
     kwargs = {**default_params, **params}
     
     return CoinGameEnvironment(kwargs)
+
+
+
+def vector_coin_game_make(params: dict):
+    """Generates a vectorized CoinGame instance using a partial parameter dictionary."""
+    env = coin_game_make(params)
+    return VectorCoinGameEnvironment(env)
+
+
+class VectorCoinGameEnvironment(gym.vector.VectorEnv):
+    """Vectorized CoinGame environment wrapper that complies with `gym.vector.VectorEnv` API.
+    """
+    
+    def __init__(self, params_or_env: Union[dict, CoinGameEnvironment]):
+        assert isinstance(params_or_env, (dict, CoinGameEnvironment)), 'must supply either a parameter dictionary or an existing CoinGame environment instance'
+        if isinstance(params_or_env, dict):
+            self.env = CoinGameEnvironment(params_or_env)
+        elif isinstance(params_or_env, CoinGameEnvironment):
+            self.env = params_or_env
+        else:
+            raise NotImplementedError
+        self.num_envs = self.env.nr_agents
+        self.single_action_space = gym.spaces.Discrete(self.env.nr_actions)
+        self.action_space = gym.spaces.MultiDiscrete([self.env.nr_actions] * self.env.nr_agents)
+        self.observation_space = gym.spaces.Box(low=0, high=self.env.nr_agents, shape=(self.env.nr_agents, self.env.observation_dim), dtype='int32')
+    
+    @staticmethod
+    def _vectorize_list(l: list[numpy.ndarray]):
+        """Converts a list of numpy arrays to a single numpy array with the same data type."""
+        dtype = l[0].dtype
+        return numpy.array(l, dtype=dtype)
+
+    # Explicitly wrap `reset()` to fill in missing info dictionary.
+    def reset(self, *args, **kwargs):
+        o = self.env.reset()
+        o = self._vectorize_list(o)
+        return o, {} # Fill in missing info as empty dict.
+
+    # Explicitly wrap `step()` to fill in missing truncated flag.
+    def step(self, *args, **kwargs):
+        observations, rewards, done, infos = self.env.step(*args, **kwargs)
+        
+        # Vectorize.
+        observations = self._vectorize_list(observations)
+        rewards = self._vectorize_list(rewards)
+        done = numpy.array([done] * self.env.nr_agents)
+        truncated = numpy.array([False] * self.env.nr_agents) # Fill in missing truncated flag as static False.
+        return observations, rewards, done, truncated, infos
+    
+    # Implicitly forward all other methods to `self.env`.
+    def __getattr__(self, name):
+        return getattr(self.env, name)

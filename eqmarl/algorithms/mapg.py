@@ -40,12 +40,12 @@ class MAPG(Algorithm):
         ):
         assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"
         assert isinstance(env.action_space, (gym.spaces.MultiDiscrete,)), "only `MultiDiscrete` action spaces are supported"
-        self.env = env
-        self.n_envs = self.env.num_envs
         self.episode_metrics_callback = episode_metrics_callback # cb(env)
         self.model_policy = model_policy
         self.optimizer_policy = optimizer_policy
         self.gamma = gamma
+        
+        super().__init__(env, episode_metrics_callback)
 
     def policy(self, states) -> tuple[list[int], list[tf.Tensor]]:
         """Get policy estimation for each agent individually."""
@@ -143,83 +143,136 @@ class MAPG(Algorithm):
                 self.optimizer_policy[i].apply_gradients([(grads[i], self.model_policy.trainable_variables[i])])
         else:
             self.optimizer_policy.apply_gradients(zip(grads, self.model_policy.trainable_variables))
+            
 
-
-    def train(self,
-        n_episodes: int, # Number of episodes.
-        max_steps_per_episode: int = 10000,
-        ) -> dict[str, list]:
+    def run_episode(self, 
+        episode: int,
+        total_steps: int,
+        max_steps_per_episode: int,
+        ) -> tuple[Union[float, np.ndarray], list, int]:
+        """Runs a single episode.
         
-        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        Returns a tuple of (episode_reward, interaction_history, n_steps).
+        """
 
-        episode_reward_history = []
-        episode_metrics_history = []
-        steps = 0
-        try:
-            with trange(n_episodes, unit='episode') as tepisode:
-                for episode in tepisode:
-                    tepisode.set_description(f"Episode {episode}")
+        episode_reward = 0
+        batch = []
+
+        # Reset environment.
+        states, _ = self.env.reset()
+        
+        # Iterate through environment at discrete time steps.
+        for t in range(max_steps_per_episode):
+
+            # Get the joint action.
+            actions, action_probs = self.policy(states)
+
+            # Step through environment using joint action.
+            next_states, rewards, dones, truncated, infos = self.env.step(actions)
+            
+            # Preserve interaction.
+            interaction = VectorInteraction(
+                states=states,
+                actions=actions,
+                action_probs=action_probs,
+                rewards=rewards,
+                next_states=next_states,
+                dones=dones,
+            )
+            batch.append(interaction)
+            
+            # Set next state.
+            states = next_states
+
+            # Modify episode reward.
+            episode_reward += rewards
+
+            # Terminate episode.
+            if any(dones) or any(truncated):
+                break
+            
+        # Update the model after each episode.
+        self.update(batch)
+
+        return episode_reward, batch, t
+
+
+    # def train(self,
+    #     n_episodes: int, # Number of episodes.
+    #     max_steps_per_episode: int = 10000,
+    #     ) -> dict[str, list]:
+        
+    #     print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+
+    #     episode_reward_history = []
+    #     episode_metrics_history = []
+    #     steps = 0
+    #     try:
+    #         with trange(n_episodes, unit='episode') as tepisode:
+    #             for episode in tepisode:
+    #                 tepisode.set_description(f"Episode {episode}")
                     
-                    episode_reward = 0
-                    batch = []
+    #                 episode_reward = 0
+    #                 batch = []
 
-                    # Reset environment.
-                    states, _ = self.env.reset()
+    #                 # Reset environment.
+    #                 states, _ = self.env.reset()
                     
-                    # Iterate through environment at discrete time steps.
-                    for t in range(max_steps_per_episode):
-                        steps += 1
+    #                 # Iterate through environment at discrete time steps.
+    #                 for t in range(max_steps_per_episode):
+    #                     steps += 1
 
-                        # Get the joint action.
-                        actions, action_probs = self.policy(states)
+    #                     # Get the joint action.
+    #                     actions, action_probs = self.policy(states)
 
-                        # Step through environment using joint action.
-                        next_states, rewards, dones, truncated, infos = self.env.step(actions)
+    #                     # Step through environment using joint action.
+    #                     next_states, rewards, dones, truncated, infos = self.env.step(actions)
                         
-                        # Preserve interaction.
-                        interaction = VectorInteraction(
-                            states=states,
-                            actions=actions,
-                            action_probs=action_probs,
-                            rewards=rewards,
-                            next_states=next_states,
-                            dones=dones,
-                        )
-                        batch.append(interaction)
+    #                     # Preserve interaction.
+    #                     interaction = VectorInteraction(
+    #                         states=states,
+    #                         actions=actions,
+    #                         action_probs=action_probs,
+    #                         rewards=rewards,
+    #                         next_states=next_states,
+    #                         dones=dones,
+    #                     )
+    #                     batch.append(interaction)
                         
-                        # Set next state.
-                        states = next_states
+    #                     # Set next state.
+    #                     states = next_states
 
-                        # Modify episode reward.
-                        episode_reward += rewards
+    #                     # Modify episode reward.
+    #                     episode_reward += rewards
 
-                        # Terminate episode.
-                        if any(dones) or any(truncated):
-                            break
+    #                     # Terminate episode.
+    #                     if any(dones) or any(truncated):
+    #                         break
                     
-                    # Update the model after each episode.
-                    self.update(batch)
+    #                 # Update the model after each episode.
+    #                 self.update(batch)
 
-                    # Compute episode metrics.
-                    episode_reward_history.append(episode_reward)
-                    if self.episode_metrics_callback is not None:
-                        episode_metrics_history.append(self.episode_metrics_callback(self.env))
-                    else:
-                        episode_metrics = {}
+    #                 # Compute episode metrics.
+    #                 episode_reward_history.append(episode_reward)
+    #                 if self.episode_metrics_callback is not None:
+    #                     episode_metrics = self.episode_metrics_callback(self.env)
+    #                     episode_metrics_history.append(episode_metrics)
+    #                 else:
+    #                     episode_metrics = {}
 
-                    tepisode.set_postfix(episode_reward=episode_reward, **episode_metrics)
-                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
+    #                 tepisode.set_postfix(episode_reward=episode_reward, **episode_metrics)
+    #                 tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
 
-        except KeyboardInterrupt:
-            print(f"Terminating early at episode {episode}")
+    #     except KeyboardInterrupt:
+    #         print(f"Terminating early at episode {episode}")
         
-        # Convert 'list of dicts' to 'dict of lists'.
-        if episode_metrics_history:
-            episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
-        else:
-            episode_metrics_history = {}
+    #     # Convert 'list of dicts' to 'dict of lists'.
+    #     if episode_metrics_history:
+    #         episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
+    #     else:
+    #         episode_metrics_history = {}
         
-        return episode_reward_history, episode_metrics_history
+    #     return episode_reward_history, episode_metrics_history
 
     
     

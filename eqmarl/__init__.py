@@ -8,3 +8,4 @@ from .models import *
 from .observables import *
 from .agents import *
 from .trainers import *
+from .algorithms import *

@@ -3,24 +3,10 @@ import tensorflow.keras as keras
 from typing import Union
 import numpy as np
 import gymnasium as gym
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from tqdm import trange
 
-from .algorithm import Algorithm
-
-
-
-
-@dataclass
-class Interaction:
-    """Environment interaction."""
-    state: tf.Tensor
-    action: int
-    action_probs: tf.Tensor
-    reward: float
-    next_state: tf.Tensor
-    done: bool
-
+from .algorithm import Algorithm, Interaction
 
 
 class A2C(Algorithm):
@@ -41,10 +27,8 @@ class A2C(Algorithm):
         alpha: float = 0.001, # Entropy coefficient.
         episode_metrics_callback = None, # Called at the end of each episode to report metrics.
         ):
-        assert isinstance(env, gym.Env), "only gymnasium environments are supported (must be instance of `gym.Env`)"
+        super().__init__(env, episode_metrics_callback)
         assert isinstance(env.action_space, (gym.spaces.Discrete,)), "only `Discrete` action spaces are supported"
-        self.env = env
-        self.episode_metrics_callback = episode_metrics_callback # cb(env)
         self.model_actor = model_actor
         self.model_critic = model_critic
         self.optimizer_actor = optimizer_actor
@@ -147,78 +131,52 @@ class A2C(Algorithm):
             self.optimizer_critic.apply_gradients(zip(grads_critic, self.model_critic.trainable_variables))
 
 
-    def train(self,
-        n_episodes: int, # Number of episodes.
-        max_steps_per_episode: int = 10000,
-        ) -> dict[str, list]:
+    def run_episode(self, 
+        episode: int, # Episode number.
+        total_steps: int, # Total number of steps up until the start of this episode.
+        max_steps_per_episode: int, # Maximum number of steps in this episode.
+        ) -> tuple[Union[float, np.ndarray], list[Interaction], int]:
+        """Runs a single episode.
         
-        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        Returns a tuple of (episode_reward, interaction_history, n_steps).
+        """
+        episode_reward = 0
+        batch = []
 
-        episode_reward_history = []
-        episode_metrics_history = []
-        steps = 0
-        try:
-            with trange(n_episodes, unit='episode') as tepisode:
-                for episode in tepisode:
-                    tepisode.set_description(f"Episode {episode}")
-                    
-                    episode_reward = 0
-                    batch = []
-
-                    # Reset environment.
-                    state, _ = self.env.reset()
-                    
-                    # Iterate through environment at discrete time steps.
-                    for t in range(max_steps_per_episode):
-                        steps += 1
-
-                        # Get policy estimation for current state.
-                        action, action_probs = self.policy(state)
-
-                        # Interact with environment.
-                        next_state, reward, done, truncated, info = self.env.step(action)
-                        
-                        # Preserve interaction.
-                        interaction = Interaction(
-                            state=state,
-                            action=action,
-                            action_probs=action_probs,
-                            reward=reward,
-                            next_state=next_state,
-                            done=done,
-                        )
-                        batch.append(interaction)
-                        
-                        # Set next state.
-                        state = next_state
-
-                        # Modify episode reward.
-                        episode_reward += reward
-
-                        # Terminate episode.
-                        if done or truncated:
-                            break
-                    
-                    # Update the model after each episode.
-                    self.update(batch)
-
-                    # Compute episode metrics.
-                    episode_reward_history.append(episode_reward)
-                    if self.episode_metrics_callback is not None:
-                        episode_metrics_history.append(self.episode_metrics_callback(self.env))
-                    else:
-                        episode_metrics = {}
-
-                    tepisode.set_postfix(episode_reward=episode_reward, **episode_metrics)
-                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
-
-        except KeyboardInterrupt:
-            print(f"Terminating early at episode {episode}")
+        # Reset environment.
+        state, _ = self.env.reset()
         
-        # Convert 'list of dicts' to 'dict of lists'.
-        if episode_metrics_history:
-            episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
-        else:
-            episode_metrics_history = {}
+        # Iterate through environment at discrete time steps.
+        for t in range(max_steps_per_episode):
+
+            # Get policy estimation for current state.
+            action, action_probs = self.policy(state)
+
+            # Interact with environment.
+            next_state, reward, done, truncated, info = self.env.step(action)
+            
+            # Preserve interaction.
+            interaction = Interaction(
+                state=state,
+                action=action,
+                action_probs=action_probs,
+                reward=reward,
+                next_state=next_state,
+                done=done,
+            )
+            batch.append(interaction)
+            
+            # Set next state.
+            state = next_state
+
+            # Modify episode reward.
+            episode_reward += reward
+
+            # Terminate episode.
+            if done or truncated:
+                break
         
-        return episode_reward_history, episode_metrics_history
+        # Update the model after each episode.
+        self.update(batch)
+        
+        return episode_reward, batch, t

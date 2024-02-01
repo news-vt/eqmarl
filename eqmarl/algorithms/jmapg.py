@@ -3,31 +3,13 @@ import tensorflow.keras as keras
 from typing import Union
 import numpy as np
 import gymnasium as gym
-
 import itertools
-from dataclasses import dataclass, asdict
-from collections import deque
+from dataclasses import asdict
 
-from tqdm import trange
-
-from .algorithm import Algorithm
+from .algorithm import VectorAlgorithm, VectorInteraction
 
 
-
-
-@dataclass
-class VectorInteraction:
-    """Vectorized environment interaction."""
-    states: tf.Tensor
-    actions: list[int]
-    action_probs: tf.Tensor
-    rewards: float
-    next_states: tf.Tensor
-    dones: list[bool]
-
-
-
-class jMAPG(Algorithm):
+class jMAPG(VectorAlgorithm):
     """Multi-agent policy gradient with joint policy and expected discounted returns.
     """
     
@@ -38,11 +20,8 @@ class jMAPG(Algorithm):
         gamma: float,
         episode_metrics_callback = None, # Called at the end of each episode to report metrics.
         ):
-        assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"
+        super().__init__(env, episode_metrics_callback)
         assert isinstance(env.action_space, (gym.spaces.MultiDiscrete,)), "only `MultiDiscrete` action spaces are supported"
-        self.env = env
-        self.n_envs = self.env.num_envs
-        self.episode_metrics_callback = episode_metrics_callback # cb(env)
         self.model_policy = model_policy
         self.optimizer_policy = optimizer_policy
         self.gamma = gamma
@@ -163,78 +142,53 @@ class jMAPG(Algorithm):
             self.optimizer_policy.apply_gradients(zip(grads, self.model_policy.trainable_variables))
 
 
-    def train(self,
-        n_episodes: int, # Number of episodes.
-        max_steps_per_episode: int = 10000,
-        ) -> dict[str, list]:
+    def run_episode(self, 
+        episode: int,
+        total_steps: int,
+        max_steps_per_episode: int,
+        ) -> tuple[Union[float, np.ndarray], list[VectorInteraction], int]:
+        """Runs a single episode.
         
-        print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        Returns a tuple of (episode_reward, interaction_history, n_steps).
+        """
 
-        episode_reward_history = []
-        episode_metrics_history = []
-        steps = 0
-        try:
-            with trange(n_episodes, unit='episode') as tepisode:
-                for episode in tepisode:
-                    tepisode.set_description(f"Episode {episode}")
-                    
-                    episode_reward = 0
-                    batch = []
+        episode_reward = 0
+        batch = []
 
-                    # Reset environment.
-                    states, _ = self.env.reset()
-                    
-                    # Iterate through environment at discrete time steps.
-                    for t in range(max_steps_per_episode):
-                        steps += 1
-
-                        # Get the joint action.
-                        actions, action_probs = self.policy(states)
-
-                        # Step through environment using joint action.
-                        next_states, rewards, dones, truncated, infos = self.env.step(actions)
-                        
-                        # Preserve interaction.
-                        interaction = VectorInteraction(
-                            states=states,
-                            actions=actions,
-                            action_probs=action_probs,
-                            rewards=rewards,
-                            next_states=next_states,
-                            dones=dones,
-                        )
-                        batch.append(interaction)
-                        
-                        # Set next state.
-                        states = next_states
-
-                        # Modify episode reward.
-                        episode_reward += rewards
-
-                        # Terminate episode.
-                        if any(dones) or any(truncated):
-                            break
-                    
-                    # Update the model after each episode.
-                    self.update(batch)
-
-                    # Compute episode metrics.
-                    episode_reward_history.append(episode_reward)
-                    if self.episode_metrics_callback is not None:
-                        episode_metrics_history.append(self.episode_metrics_callback(self.env))
-                    else:
-                        episode_metrics = {}
-
-                    tepisode.set_postfix(episode_reward=episode_reward, **episode_metrics)
-                    tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
-
-        except KeyboardInterrupt:
-            print(f"Terminating early at episode {episode}")
+        # Reset environment.
+        states, _ = self.env.reset()
         
-        # Convert 'list of dicts' to 'dict of lists'.
-        if episode_metrics_history:
-            episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
-        else:
-            episode_metrics_history = {}
-        
-        return episode_reward_history, episode_metrics_history
+        # Iterate through environment at discrete time steps.
+        for t in range(max_steps_per_episode):
+
+            # Get the joint action.
+            actions, action_probs = self.policy(states)
+
+            # Step through environment using joint action.
+            next_states, rewards, dones, truncated, infos = self.env.step(actions)
+            
+            # Preserve interaction.
+            interaction = VectorInteraction(
+                states=states,
+                actions=actions,
+                action_probs=action_probs,
+                rewards=rewards,
+                next_states=next_states,
+                dones=dones,
+            )
+            batch.append(interaction)
+            
+            # Set next state.
+            states = next_states
+
+            # Modify episode reward.
+            episode_reward += rewards
+
+            # Terminate episode.
+            if any(dones) or any(truncated):
+                break
+            
+        # Update the model after each episode.
+        self.update(batch)
+
+        return episode_reward, batch, t

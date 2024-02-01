@@ -3,31 +3,14 @@ import tensorflow.keras as keras
 from typing import Union
 import numpy as np
 import gymnasium as gym
+from dataclasses import asdict
 
-import itertools
-from dataclasses import dataclass, asdict
-from collections import deque
-
-from tqdm import trange
-
-from .algorithm import Algorithm
+from .algorithm import VectorAlgorithm, VectorInteraction
 
 
 
 
-@dataclass
-class VectorInteraction:
-    """Vectorized environment interaction."""
-    states: tf.Tensor
-    actions: list[int]
-    action_probs: tf.Tensor
-    rewards: float
-    next_states: tf.Tensor
-    dones: list[bool]
-
-
-
-class MAPG(Algorithm):
+class MAPG(VectorAlgorithm):
     """Multi-agent policy gradient with shared policy and expected discounted returns.
     """
     
@@ -38,14 +21,11 @@ class MAPG(Algorithm):
         gamma: float,
         episode_metrics_callback = None, # Called at the end of each episode to report metrics.
         ):
-        assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"
+        super().__init__(env, episode_metrics_callback)
         assert isinstance(env.action_space, (gym.spaces.MultiDiscrete,)), "only `MultiDiscrete` action spaces are supported"
-        self.episode_metrics_callback = episode_metrics_callback # cb(env)
         self.model_policy = model_policy
         self.optimizer_policy = optimizer_policy
         self.gamma = gamma
-        
-        super().__init__(env, episode_metrics_callback)
 
     def policy(self, states) -> tuple[list[int], list[tf.Tensor]]:
         """Get policy estimation for each agent individually."""
@@ -149,7 +129,7 @@ class MAPG(Algorithm):
         episode: int,
         total_steps: int,
         max_steps_per_episode: int,
-        ) -> tuple[Union[float, np.ndarray], list, int]:
+        ) -> tuple[Union[float, np.ndarray], list[VectorInteraction], int]:
         """Runs a single episode.
         
         Returns a tuple of (episode_reward, interaction_history, n_steps).

@@ -18,10 +18,8 @@ class PG(Algorithm):
         gamma: float = 1., # Discount factor for returns, =1 means no discounting.
         episode_metrics_callback = None, # Called at the end of each episode to report metrics.
         ):
-        assert isinstance(env, gym.Env), "only gymnasium environments are supported (must be instance of `gym.Env`)"
+        super().__init__(env, episode_metrics_callback)
         assert isinstance(env.action_space, (gym.spaces.Discrete,)), "only `Discrete` action spaces are supported"
-        self.env = env
-        self.episode_metrics_callback = episode_metrics_callback # cb(env)
         self.model_policy = model_policy
         self.optimizer_policy = optimizer_policy
         self.gamma = gamma

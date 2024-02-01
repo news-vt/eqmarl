@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Union
 import gymnasium as gym
 from tqdm import trange
@@ -5,10 +6,33 @@ import numpy as np
 import tensorflow as tf
 
 
+@dataclass
+class Interaction:
+    """Environment interaction."""
+    state: tf.Tensor
+    action: int
+    action_probs: tf.Tensor
+    reward: float
+    next_state: tf.Tensor
+    done: bool
+
+
+@dataclass
+class VectorInteraction:
+    """Vectorized environment interaction."""
+    states: tf.Tensor
+    actions: list[int]
+    action_probs: tf.Tensor
+    rewards: float
+    next_states: tf.Tensor
+    dones: list[bool]
+
+
 class Algorithm:
+    """Reinforcement learning algorithm base class for use with `gym.Env` environments."""
 
     def __init__(self, env: gym.Env, episode_metrics_callback):
-        super().__init__()
+        assert isinstance(env, gym.Env), "only gymnasium environments are supported (must be instance of `gym.Env`)"
         self.env = env
         self.episode_metrics_callback = episode_metrics_callback
 
@@ -17,7 +41,7 @@ class Algorithm:
         episode: int, # Episode number.
         total_steps: int, # Total number of steps up until the start of this episode.
         max_steps_per_episode: int, # Maximum number of steps in this episode.
-        ) -> tuple[Union[float, np.ndarray], list, int]:
+        ) -> tuple[Union[float, np.ndarray], list[Interaction], int]:
         """Runs a single episode.
         
         Returns a tuple of (episode_reward, interaction_history, n_steps).
@@ -71,3 +95,24 @@ class Algorithm:
             episode_metrics_history = {}
         
         return episode_reward_history, episode_metrics_history
+
+
+
+
+class VectorAlgorithm(Algorithm):
+    """Vectorized reinforcement learning algorithm base class for use with `gym.vector.VectorEnv` environments."""
+
+    def __init__(self, env: gym.vector.VectorEnv, episode_metrics_callback):
+        assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"
+        super().__init__(env, episode_metrics_callback)
+
+    def run_episode(self, 
+        episode: int, # Episode number.
+        total_steps: int, # Total number of steps up until the start of this episode.
+        max_steps_per_episode: int, # Maximum number of steps in this episode.
+        ) -> tuple[Union[float, np.ndarray], list[VectorInteraction], int]:
+        """Runs a single episode.
+        
+        Returns a tuple of (episode_reward, interaction_history, n_steps).
+        """
+        raise NotImplementedError

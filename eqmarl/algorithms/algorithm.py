@@ -104,7 +104,9 @@ class VectorAlgorithm(Algorithm):
 
     def __init__(self, env: gym.vector.VectorEnv, episode_metrics_callback):
         assert isinstance(env, gym.vector.VectorEnv), "only vectorized environments are supported (must be instance of `gym.vector.VectorEnv`)"
-        super().__init__(env, episode_metrics_callback)
+        self.env = env
+        self.episode_metrics_callback = episode_metrics_callback
+        self.n_envs = self.env.num_envs
 
     def run_episode(self, 
         episode: int, # Episode number.

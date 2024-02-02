@@ -99,15 +99,15 @@ class MAPG(VectorAlgorithm):
             # Estimate the policy for each actor individually.
             # agents_action_probs_log = []
             agents_action_probs_log = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-            for i in range(self.n_envs):
-                action_probs = self.model_policy(states_batched[:,i]) # pi(a|s)
+            for k in range(self.n_envs):
+                action_probs = self.model_policy(states_batched[:,k]) # pi(a|s)
 
                 # Convert batched individual actions back to a joint action.
-                id_action_pairs = np.array([(i,a) for i, a in enumerate(actions_batched[:,i])]) # (n_time_steps, 2,)
+                id_action_pairs = np.array([(i,a) for i, a in enumerate(actions_batched[:,k])]) # (n_time_steps, 2,)
                 probs_of_chosen_actions = tf.gather_nd(action_probs, id_action_pairs) # (n_time_steps,)
                 action_probs_log = tf.math.log(probs_of_chosen_actions) # (n_time_steps,)
                 # agents_action_probs_log.append(action_probs_log)
-                agents_action_probs_log = agents_action_probs_log.write(i, action_probs_log)
+                agents_action_probs_log = agents_action_probs_log.write(k, action_probs_log)
             # agents_action_probs_log = tf.stack(agents_action_probs_log, axis=-1)
             agents_action_probs_log = tf.transpose(agents_action_probs_log.stack())
 

@@ -7,6 +7,21 @@ import sympy
 from time import perf_counter
 from contextlib import contextmanager
 import itertools
+import json
+
+
+class NumpyJSONEncoder(json.JSONEncoder):
+    """Serializes numpy objects for JSON support."""
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        return super().default(obj)
+
+
 
 
 @contextmanager

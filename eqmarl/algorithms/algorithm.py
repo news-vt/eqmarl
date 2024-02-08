@@ -1,9 +1,12 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Any, Union
 import gymnasium as gym
 from tqdm import trange
 import numpy as np
 import tensorflow as tf
+from pathlib import Path
+import json
+from ..tools import NumpyJSONEncoder
 
 
 @dataclass
@@ -52,7 +55,7 @@ class Algorithm:
     def train(self,
         n_episodes: int, # Number of episodes.
         max_steps_per_episode: int = 10000,
-        ) -> dict[str, list]:
+        ) -> tuple[np.ndarray, dict[str, Any]]:
         
         print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
 
@@ -96,6 +99,22 @@ class Algorithm:
         
         return episode_reward_history, episode_metrics_history
 
+    @staticmethod
+    def save_train_results(filepath: Union[str, Path], reward_history: np.ndarray, metrics_history: dict[str, Any]):
+        """Saves training results to JSON file."""
+        d = dict(
+            reward=reward_history,
+            metrics=metrics_history,
+        )
+        with open(str(filepath), 'w+') as f:
+            json.dump(d, f, cls=NumpyJSONEncoder)
+
+    @staticmethod
+    def load_train_results(filepath: Union[str, Path]) -> tuple[list, dict[str, Any]]:
+        """Loads training results from JSON file."""
+        with open(str(filepath), 'r') as f:
+            d = json.load(f)
+        return d['reward'], d['metrics']
 
 
 

@@ -73,18 +73,27 @@ class MAA2C(VectorAlgorithm):
         # Convert training batch to dictionary.
         batch = {k:[asdict(d)[k] for d in batch] for k in asdict(batch[0]).keys()}
         
+        # Unpack training batch elements.
         states_batched = np.array(batch['states']) #.squeeze()
         actions_batched = np.array(batch['actions']) #.squeeze()
         rewards_batched = np.array(batch['rewards'], dtype='float32') #.squeeze()
         next_states_batched = np.array(batch['next_states']) #.squeeze()
         dones_batched = np.array(batch['dones'], dtype='float32') #.squeeze()
         
+        # Convert training batch elements to tensors.
         states_batched = tf.convert_to_tensor(states_batched)
         actions_batched = tf.convert_to_tensor(actions_batched)
         rewards_batched = tf.convert_to_tensor(rewards_batched)
         next_states_batched = tf.convert_to_tensor(next_states_batched)
         dones_batched = tf.convert_to_tensor(dones_batched)
         
+        # Compute total reward, which is sum of all agent rewards.
+        rewards_batched = tf.reduce_sum(rewards_batched, axis=-1, keepdims=True)
+        
+        # Total `done` signal.
+        dones_batched = tf.cast(tf.reduce_sum(dones_batched, axis=-1, keepdims=True) > 0., 'float32')
+        
+        # Critic loss function, used later.
         huber_loss = tf.keras.losses.Huber(reduction=keras.losses.Reduction.SUM)
 
         # Update the critic and actor networks simultaneously.

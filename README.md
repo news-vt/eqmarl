@@ -1,4 +1,5 @@
-# eqmarl
+# eQMARL
+
 Entangled Quantum Multi-Agent Reinforcement Learning (eQMARL) for Coupled Agent Learning.
 
 ## Installation

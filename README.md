@@ -1,5 +1,5 @@
 # eqmarl
-eQMARL: Quantum multi-agent reinforcement learning with entangled agents.
+Entangled Quantum Multi-Agent Reinforcement Learning (eQMARL) for Coupled Agent Learning.
 
 ## Installation
 

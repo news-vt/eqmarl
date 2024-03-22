@@ -95,22 +95,22 @@ class ParameterizedOperationGate(cirq.Gate):
     
     operations: list[cirq.Gate] = []
     
-    def __init__(self, theta: np.ndarray, name: str = None):
+    def __init__(self, params: np.ndarray, name: str = None):
         super().__init__()
-        self.theta = theta
+        self.params = params
         self.name = name or self.__class__.__name__
         
     def _num_qubits_(self):
-        return self.theta.shape[0]
+        return self.params.shape[0]
 
     def _decompose_(self, qubits):
         # Decompose rotations into operations.
         for i, q in enumerate(qubits):
             for j, op in enumerate(self.operations):
-                yield op(self.theta[..., i, j])(q)
+                yield op(self.params[..., i, j])(q)
                 
     def _circuit_diagram_info_(self, args):
-        return [f'{self.name}({self.theta[i]})' for i in range(self.theta.shape[0])]
+        return [f'{self.name}({self.params[i]})' for i in range(self.params.shape[0])]
     
     @classmethod
     def get_shape(cls,

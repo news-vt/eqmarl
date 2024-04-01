@@ -136,6 +136,6 @@ class AlgorithmResultCheckpoint(Callback):
                 datetime=datetime.now().isoformat(),
                 episode=episode+1,
                 )
-            self.algorithm.save_train_results(fps)
+            self.algorithm.save(filepath=fps)
             if self.verbose:
                 print(f"Saving results at episode {episode+1} to file {self.filepath}")

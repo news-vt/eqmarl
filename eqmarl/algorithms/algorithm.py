@@ -6,7 +6,9 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 import json
+from datetime import datetime
 from ..tools import NumpyJSONEncoder
+from ..callbacks import Callback, CallbackList
 
 
 @dataclass
@@ -38,7 +40,40 @@ class Algorithm:
         assert isinstance(env, gym.Env), "only gymnasium environments are supported (must be instance of `gym.Env`)"
         self.env = env
         self.episode_metrics_callback = episode_metrics_callback
+        self._episode_reward_history = []
+        self._episode_metrics_history = []
+        
+    @property
+    def episode_reward_history(self):
+        # TODO may need resource locking here if multi-threading training.
+        return self._episode_reward_history
 
+    @property
+    def episode_metrics_history(self):
+        # TODO may need resource locking here if multi-threading training.
+        return self._episode_metrics_history
+
+    @episode_reward_history.setter
+    def episode_reward_history(self, episode_reward_history):
+        # TODO may need resource locking here if multi-threading training.
+        self._episode_reward_history = episode_reward_history
+
+    @episode_metrics_history.setter
+    def episode_metrics_history(self, episode_metrics_history):
+        # TODO may need resource locking here if multi-threading training.
+        self._episode_metrics_history = episode_metrics_history
+
+    @property
+    def episode_metrics_history_dict(self):
+        # TODO may need resource locking here if multi-threading training.
+        if self.episode_metrics_history:
+            # Convert 'list of dicts' to 'dict of lists'.
+            return {
+                k: [d[k] for d in self.episode_metrics_history] 
+                for k in self.episode_metrics_history[0].keys()
+                }
+        else:
+            return {}
 
     def run_episode(self, 
         episode: int, # Episode number.
@@ -55,17 +90,33 @@ class Algorithm:
     def train(self,
         n_episodes: int, # Number of episodes.
         max_steps_per_episode: int = 10000,
+        callbacks: list[Callback] = [],
         ) -> tuple[np.ndarray, dict[str, Any]]:
         
         print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
+        
+        # Convert callbacks to list subclass.
+        callbacks: CallbackList = CallbackList(callbacks)
+        
+        # Set algorithm for all callbacks.
+        callbacks.algorithm = self
 
-        episode_reward_history = []
-        episode_metrics_history = []
+        # Reset history.
+        self.episode_reward_history = []
+        self.episode_metrics_history = []
         total_steps = 0
+        
+        # Callback train begin.
+        callbacks.on_train_begin()
+        
+        # Run training.
         try:
             with trange(n_episodes, unit='episode') as tepisode:
                 for episode in tepisode:
                     tepisode.set_description(f"Episode {episode}")
+                    
+                    # Callback episode begin.
+                    callbacks.on_episode_begin(episode)
 
                     # Run the episode.
                     episode_reward, _, episode_steps = self.run_episode(
@@ -78,35 +129,37 @@ class Algorithm:
                     total_steps += episode_steps
 
                     # Compute episode metrics.
-                    episode_reward_history.append(episode_reward)
+                    self.episode_reward_history.append(episode_reward)
                     if self.episode_metrics_callback is not None:
                         episode_metrics = self.episode_metrics_callback(self.env)
-                        episode_metrics_history.append(episode_metrics)
+                        self.episode_metrics_history.append(episode_metrics)
                     else:
                         episode_metrics = {}
+
+                    # Callback episode end.
+                    callbacks.on_episode_end(episode)
 
                     tepisode.set_postfix(episode_reward=episode_reward, **episode_metrics)
                     tepisode.set_description(f"Episode {episode+1}") # Force next episode description.
 
         except KeyboardInterrupt:
             print(f"Terminating early at episode {episode}")
-        
-        # Convert 'list of dicts' to 'dict of lists'.
-        if episode_metrics_history:
-            episode_metrics_history = {k:[d[k] for d in episode_metrics_history] for k in episode_metrics_history[0].keys()}
-        else:
-            episode_metrics_history = {}
-        
-        return episode_reward_history, episode_metrics_history
 
-    @staticmethod
-    def save_train_results(filepath: Union[str, Path], reward_history: np.ndarray, metrics_history: dict[str, Any]):
-        """Saves training results to JSON file."""
+        # Callback train end.
+        callbacks.on_train_end()
+
+        return self.episode_reward_history, self.episode_metrics_history_dict
+
+    def save_train_results(self, filepath: Union[str, Path]):
+        """Saves training results from algorithm class instance to JSON file."""
         d = dict(
-            reward=reward_history,
-            metrics=metrics_history,
+            reward=self.episode_reward_history,
+            metrics=self.episode_metrics_history_dict,
         )
-        with open(str(filepath), 'w+') as f:
+        filepath = str(filepath).format(
+            datetime=datetime.now().isoformat(),
+            )
+        with open(filepath, 'w+') as f:
             json.dump(d, f, cls=NumpyJSONEncoder)
 
     @staticmethod
@@ -126,6 +179,8 @@ class VectorAlgorithm(Algorithm):
         self.env = env
         self.episode_metrics_callback = episode_metrics_callback
         self.n_envs = self.env.num_envs
+        self._episode_reward_history = []
+        self._episode_metrics_history = []
 
     def run_episode(self, 
         episode: int, # Episode number.

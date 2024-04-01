@@ -150,11 +150,20 @@ class Algorithm:
 
         return self.episode_reward_history, self.episode_metrics_history_dict
 
-    def save_train_results(self, filepath: Union[str, Path]):
+    def save(self, filepath: Union[str, Path]):
         """Saves training results from algorithm class instance to JSON file."""
+        self.save_train_results(
+            filepath=filepath, 
+            reward_history=self.episode_reward_history, 
+            metrics_history=self.episode_metrics_history_dict,
+            )
+
+    @staticmethod
+    def save_train_results(filepath: Union[str, Path], reward_history: np.ndarray, metrics_history: dict[str, Any]):
+        """Saves training results to JSON file."""
         d = dict(
-            reward=self.episode_reward_history,
-            metrics=self.episode_metrics_history_dict,
+            reward=reward_history,
+            metrics=metrics_history,
         )
         filepath = str(filepath).format(
             datetime=datetime.now().isoformat(),

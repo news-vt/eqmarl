@@ -30,6 +30,10 @@ def generate_variational_encoding_circuit(
     
     # Build the circuit.
     ops = []
+    
+    # Apply hadamard to all qubits.
+    for q in qubits:
+        ops.append(cirq.H(q))
 
     # Build circuit in layers.
     for l in range(n_layers):

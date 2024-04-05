@@ -141,7 +141,6 @@ def generate_model_CartPole_critic_quantum(
             keras.Sequential([
                 RescaleWeighted(len(observables)),
                 keras.layers.Lambda(lambda x: x * beta),
-                # keras.layers.Softmax(),
                 ], name='observables-value')
         ], name=name)
     return model
@@ -353,7 +352,7 @@ def generate_model_CoinGame2_critic_quantum_partite(
     squash_activation = 'linear', # linear, arctan/atan, tanh
     name=None,
     ):
-    """eQMARL variant of hybrid quantum critic for CoinGame.
+    """eQMARL variant of hybrid joint quantum critic for CoinGame.
     """
     
     def map_observable_to_vector(obs: tf.Tensor) -> tf.Tensor:
@@ -398,7 +397,7 @@ def generate_model_CoinGame2_critic_quantum_partite(
             keras.Sequential([
                 RescaleWeighted(len(observables)),
                 keras.layers.Lambda(lambda x: x * beta),
-                ], name='observables-policy')
+                ], name='observables-value')
         ], name=name)
     return model
 

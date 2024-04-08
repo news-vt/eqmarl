@@ -75,16 +75,66 @@ class Algorithm:
         else:
             return {}
 
+
+    def policy(self, state) -> tuple[int, tf.Tensor]:
+        """Gets policy estimation for an input state or batched input states."""
+        raise NotImplementedError
+
+
+    def update(self, batch: list[Interaction]):
+        """Update trained models using a batch of interactions."""
+        raise NotImplementedError
+
+
     def run_episode(self, 
         episode: int, # Episode number.
         total_steps: int, # Total number of steps up until the start of this episode.
         max_steps_per_episode: int, # Maximum number of steps in this episode.
         ) -> tuple[Union[float, np.ndarray], list[Interaction], int]:
-        """Runs a single episode.
+        """Runs a single episode for a standard gymnasium environment.
         
         Returns a tuple of (episode_reward, interaction_history, n_steps).
         """
-        raise NotImplementedError
+        episode_reward = 0
+        batch = []
+
+        # Reset environment.
+        state, _ = self.env.reset()
+        
+        # Iterate through environment at discrete time steps.
+        for t in range(max_steps_per_episode):
+
+            # Get policy estimation for current state.
+            action, action_probs = self.policy(state)
+
+            # Interact with environment.
+            next_state, reward, done, truncated, info = self.env.step(action)
+            
+            # Preserve interaction.
+            interaction = Interaction(
+                state=state,
+                action=action,
+                action_probs=action_probs,
+                reward=reward,
+                next_state=next_state,
+                done=done,
+            )
+            batch.append(interaction)
+            
+            # Set next state.
+            state = next_state
+
+            # Modify episode reward.
+            episode_reward += reward
+
+            # Terminate episode.
+            if done or truncated:
+                break
+        
+        # Update the model after each episode.
+        self.update(batch)
+        
+        return episode_reward, batch, t
 
 
     def train(self,
@@ -191,13 +241,64 @@ class VectorAlgorithm(Algorithm):
         self._episode_reward_history = []
         self._episode_metrics_history = []
 
+
+    def policy(self, states, batched: bool = False) -> tuple[list[int], list[tf.Tensor]]:
+        """Gets vectorized policy estimation for an input state or batched input states."""
+        raise NotImplementedError
+
+
+    def update(self, batch: list[VectorInteraction]):
+        """Update trained models using a batch of vectorized interactions."""
+        raise NotImplementedError
+
+
     def run_episode(self, 
-        episode: int, # Episode number.
-        total_steps: int, # Total number of steps up until the start of this episode.
-        max_steps_per_episode: int, # Maximum number of steps in this episode.
+        episode: int,
+        total_steps: int,
+        max_steps_per_episode: int,
         ) -> tuple[Union[float, np.ndarray], list[VectorInteraction], int]:
-        """Runs a single episode.
+        """Runs a single episode for a vectorized gymnasium environment.
         
         Returns a tuple of (episode_reward, interaction_history, n_steps).
         """
-        raise NotImplementedError
+
+        episode_reward = 0
+        batch = []
+
+        # Reset environment.
+        states, _ = self.env.reset()
+        
+        # Iterate through environment at discrete time steps.
+        for t in range(max_steps_per_episode):
+
+            # Get the joint action.
+            actions, action_probs = self.policy(states)
+
+            # Step through environment using joint action.
+            next_states, rewards, dones, truncated, infos = self.env.step(actions)
+            
+            # Preserve interaction.
+            interaction = VectorInteraction(
+                states=states,
+                actions=actions,
+                action_probs=action_probs,
+                rewards=rewards,
+                next_states=next_states,
+                dones=dones,
+            )
+            batch.append(interaction)
+            
+            # Set next state.
+            states = next_states
+
+            # Modify episode reward.
+            episode_reward += rewards
+
+            # Terminate episode.
+            if any(dones) or any(truncated):
+                break
+            
+        # Update the model after each episode.
+        self.update(batch)
+
+        return episode_reward, batch, t

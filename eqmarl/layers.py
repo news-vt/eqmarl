@@ -61,6 +61,7 @@ class HybridVariationalEncodingPQC(keras.layers.Layer):
         squash_activation: str = 'linear',
         variational_layer_cls: ParameterizedOperationGate = VariationalRotationLayer,
         encoding_layer_cls: ParameterizedOperationGate = EncodingLayer,
+        trainable_w_enc: bool = True,
         ):
         name = name or self.__class__.__name__
         super().__init__(name=name)
@@ -80,7 +81,8 @@ class HybridVariationalEncodingPQC(keras.layers.Layer):
         )
         self.w_enc = tf.Variable(
             initial_value=tf.ones(shape=symbols_enc.shape, dtype='float32'),
-            trainable=True,
+            # trainable=True,
+            trainable=trainable_w_enc,
             name='w_enc',
         )
 
@@ -160,6 +162,7 @@ class HybridPartiteVariationalEncodingPQC(keras.layers.Layer):
         squash_activation: str = 'linear',
         variational_layer_cls: ParameterizedOperationGate = VariationalRotationLayer,
         encoding_layer_cls: ParameterizedOperationGate = EncodingLayer,
+        trainable_w_enc: bool = True,
         ):
         name = name or self.__class__.__name__
         super().__init__(name=name)
@@ -179,7 +182,8 @@ class HybridPartiteVariationalEncodingPQC(keras.layers.Layer):
         )
         self.w_enc = tf.Variable(
             initial_value=tf.ones(shape=symbols_enc.shape, dtype='float32'),
-            trainable=True,
+            # trainable=True,
+            trainable=trainable_w_enc,
             name='w_enc',
         )
         

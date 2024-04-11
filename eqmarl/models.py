@@ -221,6 +221,33 @@ def generate_model_CartPole_actor_quantum_partite(
 ###
 
 
+# Observation shape for "CoinGame-2" is (4,3,3) which means:
+# - index=0: 3x3 grid world with a `1` where the current agent is.
+# - index=1: 3x3 grid world where a `1` is added to every cell that has other agents.
+# - index=2: 3x3 grid world with a `1` for location of coin that matches the focused agent's color.
+# - index=3: 3x3 grid world with a `1` for location of coin that matches other agent's color.
+def filter_coingame2_obs_feature_dims(obs: tf.Tensor, keepdims: list[int]) -> tf.Tensor:
+    """Removes CoinGame2 observation feature dimension(s).
+    
+    This is useful for converting the default MDP state into a POMDP.
+    
+    Assumes `obs.shape` is either (4,3,3) or (n_agents,4,3,3).
+    
+    Observation shape for "CoinGame-2" is (4,3,3) which means:
+    - index=0: 3x3 grid world with a `1` where the current agent is.
+    - index=1: 3x3 grid world where a `1` is added to every cell that has other agents.
+    - index=2: 3x3 grid world with a `1` for location of coin that matches the focused agent's color.
+    - index=3: 3x3 grid world with a `1` for location of coin that matches other agent's color.
+    
+    Converts (n_agents,4,3,3) to (n_agents,3,3,3) by removing the index `i=1` from the second feature dimension.
+    """
+    assert len(obs.shape) >=3, 'observation shape must either be (4,3,3) or (n_agents,4,3,3)'
+    splits = tf.split(obs, obs.shape[-3], axis=-3)
+    t = tf.stack([splits[dim] for dim in keepdims], axis=-4)
+    t = tf.squeeze(t, axis=-3) # Only keep indexes [0,2,3].
+    return t
+
+
 def generate_model_CoinGame2_actor_quantum(
     n_layers,
     beta = 1.0,

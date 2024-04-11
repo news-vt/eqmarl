@@ -412,6 +412,107 @@ def generate_model_CoinGame2_critic_quantum_partite_mdp(
 
 
 
+def generate_model_CoinGame2_actor_quantum_shared_pomdp(
+    keepdims: list[int],
+    n_layers: int,
+    squash_activation: str = 'arctan',
+    beta: float = 1.0,
+    name: str = None,
+    ):
+    """Single-agent variant of hybrid quantum actor for CoinGame2.
+    """
+
+    # Shape of observables is already known for CoinGame2.
+    obs_shape = (4,3,3)
+    d_qubits = 3
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+    
+    # Generate observables.
+    observables = [cirq.Z(q) for q in qubits]
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_RxRyRz,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(input_size,), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Reshape((*obs_shape,)), # Reshape to matrix grid.
+                keras.layers.Lambda(lambda x: filter_CoinGame2_obs_feature_dims(x, keepdims=keepdims)), # Convert observable to POMDP.
+                keras.layers.Lambda(lambda x: map_CoinGame2_obs_to_encoded_vector(x)), # Fractional power of 2.
+                ], name="input-preprocess"),
+            qlayer, # Hybrid quantum layer.
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                keras.layers.Softmax(),
+                ], name='observables-policy')
+        ], name=name)
+    return model
+
+
+def generate_model_CoinGame2_critic_quantum_partite_pomdp(
+    keepdims: list[int],
+    n_agents: int,
+    n_layers: int,
+    beta: float = 1.0,
+    squash_activation: str = 'arctan', # linear, arctan/atan, tanh
+    name: str = None,
+    ):
+    """eQMARL variant of hybrid joint quantum critic for CoinGame2.
+    """
+
+    # Shape of observables is already known for CoinGame2.
+    obs_shape = (4,3,3)
+    d_qubits = 3
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(n_agents * d_qubits)
+
+    # Observables is joint Pauli product across all qubits.
+    observables = [ft.reduce(lambda x,y: x*y, [cirq.Z(q) for q in qubits])]
+
+    # Define quantum layer.
+    qlayer = HybridPartiteVariationalEncodingPQC(
+        qubits=qubits, 
+        n_parts=n_agents,
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_RxRyRz,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(n_agents, input_size), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Reshape((n_agents, *obs_shape)), # Reshape to matrix grid.
+                keras.layers.Lambda(lambda x: filter_CoinGame2_obs_feature_dims(x, keepdims=keepdims)), # Convert observable to POMDP.
+                keras.layers.Lambda(lambda x: map_CoinGame2_obs_to_encoded_vector(x)), # Fractional power of 2.
+                ], name="input-preprocess"),
+            qlayer,
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                ], name='observables-value')
+        ], name=name)
+    return model
+
+
 
 
 

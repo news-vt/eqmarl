@@ -226,7 +226,7 @@ def generate_model_CartPole_actor_quantum_partite(
 # - index=1: 3x3 grid world where a `1` is added to every cell that has other agents.
 # - index=2: 3x3 grid world with a `1` for location of coin that matches the focused agent's color.
 # - index=3: 3x3 grid world with a `1` for location of coin that matches other agent's color.
-def filter_coingame2_obs_feature_dims(obs: tf.Tensor, keepdims: list[int]) -> tf.Tensor:
+def filter_CoinGame2_obs_feature_dims(obs: tf.Tensor, keepdims: list[int]) -> tf.Tensor:
     """Removes CoinGame2 observation feature dimension(s).
     
     This is useful for converting the default MDP state into a POMDP.
@@ -272,7 +272,7 @@ def generate_model_CoinGame2_actor_classical_shared_pomdp(keepdims: list[int], n
     assert type(units) == list, 'units must be a list of integers'
     layers = []
     layers += [keras.layers.Reshape((4,3,3))]
-    layers += [keras.layers.Lambda(lambda x: filter_coingame2_obs_feature_dims(x, keepdims=keepdims))]
+    layers += [keras.layers.Lambda(lambda x: filter_CoinGame2_obs_feature_dims(x, keepdims=keepdims))]
     layers += [keras.layers.Flatten()]
     layers += [keras.layers.Dense(u, activation=activation) for u in units]
     layers += [keras.layers.Dense(n_actions, activation='softmax', name='policy')] # Policy estimation pi(a|s)
@@ -283,7 +283,7 @@ def generate_model_CoinGame2_critic_classical_joint_pomdp(keepdims: list[int], n
     assert type(units) == list, 'units must be a list of integers'
     layers = []
     layers += [keras.layers.Reshape((n_agents,4,3,3))]
-    layers += [keras.layers.Lambda(lambda x: filter_coingame2_obs_feature_dims(x, keepdims=keepdims))]
+    layers += [keras.layers.Lambda(lambda x: filter_CoinGame2_obs_feature_dims(x, keepdims=keepdims))]
     layers += [keras.layers.Reshape((n_agents,-1))]
     layers += [keras.layers.LocallyConnected1D(u, kernel_size=1, activation=activation) for u in units]
     layers += [keras.layers.Flatten()]

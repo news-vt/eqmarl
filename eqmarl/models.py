@@ -268,6 +268,30 @@ def generate_model_CoinGame2_critic_classical_joint_mdp(n_agents: int, units: li
     return model
 
 
+def generate_model_CoinGame2_actor_classical_shared_pomdp(keepdims: list[int], n_actions: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+    assert type(units) == list, 'units must be a list of integers'
+    layers = []
+    layers += [keras.layers.Reshape((4,3,3))]
+    layers += [keras.layers.Lambda(lambda x: filter_coingame2_obs_feature_dims(x, keepdims=keepdims))]
+    layers += [keras.layers.Flatten()]
+    layers += [keras.layers.Dense(u, activation=activation) for u in units]
+    layers += [keras.layers.Dense(n_actions, activation='softmax', name='policy')] # Policy estimation pi(a|s)
+    model = keras.Sequential(layers=layers, **kwargs)
+    return model
+
+def generate_model_CoinGame2_critic_classical_joint_pomdp(keepdims: list[int], n_agents: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+    assert type(units) == list, 'units must be a list of integers'
+    layers = []
+    layers += [keras.layers.Reshape((n_agents,4,3,3))]
+    layers += [keras.layers.Lambda(lambda x: filter_coingame2_obs_feature_dims(x, keepdims=keepdims))]
+    layers += [keras.layers.Reshape((n_agents,-1))]
+    layers += [keras.layers.LocallyConnected1D(u, kernel_size=1, activation=activation) for u in units]
+    layers += [keras.layers.Flatten()]
+    layers += [keras.layers.Dense(1, activation=None, name='v')] # Value function estimator V(s).
+    model = keras.Sequential(layers=layers, **kwargs)
+    return model
+
+
 def generate_model_CoinGame2_actor_quantum(
     n_layers,
     beta = 1.0,

@@ -320,3 +320,30 @@ class VectorCoinGameEnvironment(gym.vector.VectorEnv):
     # Implicitly forward all other methods to `self.env`.
     def __getattr__(self, name):
         return getattr(self.env, name)
+
+
+
+def episode_metrics_callback(env: CoinGameEnvironment) -> dict:
+    """Computes metrics at the end of each episode for the given CoinGame environment.
+    
+    Returns a dictionary with the following keys:
+        - `coins_collected`
+        - `own_coins_collected`
+        - `own_coin_rate`
+        - `undiscounted_reward`
+        - `discounted_reward`
+    """
+    
+    coins_collected = env.domain_values()[env.get_index('coins_collected')]
+    own_coins_collected = env.domain_values()[env.get_index('own_coins_collected')]
+    undiscounted_reward = numpy.sum(env.undiscounted_returns)
+    discounted_reward = numpy.sum(env.discounted_returns)
+    own_coin_rate = own_coins_collected/coins_collected if coins_collected != 0 else 0
+    
+    return dict(
+        coins_collected=coins_collected,
+        own_coins_collected=own_coins_collected,
+        own_coin_rate=own_coin_rate,
+        undiscounted_reward=undiscounted_reward,
+        discounted_reward=discounted_reward,
+    )

@@ -18,6 +18,28 @@ experiment:
           save_freq: 100
           verbose: True
           filepath: *metrics_file
+  
+  # Plotting parameters.
+  plot:
+    figsize: [10,8]
+    mosaic: [[undiscounted_reward, coins_collected], [own_coins_collected, own_coin_rate]]
+    axes:
+      undiscounted_reward:
+        title: Score
+        xlabel: epoch
+        ylabel: value
+      coins_collected:
+        title: Coins Collected
+        xlabel: epoch
+        ylabel: value
+      own_coins_collected:
+        title: Own Coins Collected
+        xlabel: epoch
+        ylabel: value
+      own_coin_rate:
+        title: Own Coin Rate
+        xlabel: epoch
+        ylabel: value
 
   # The algorithm to run.
   # The keys within the `init_params` key are used with direct substitution in the class initializer.

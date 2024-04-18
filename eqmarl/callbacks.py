@@ -117,6 +117,43 @@ class TensorflowModelCheckpoint(Callback):
 
 
 
+class AlgorithmModelCheckpoint(Callback):
+    """Save algorithm model checkpoint periodically during training.
+    
+    Save interval is tracked at the end of each episode.
+    """
+    
+    def __init__(self, model_name: str, filepath: pathlib.Path, save_freq: int, save_weights_only: bool = True, verbose: bool = False):
+        super().__init__()
+        self.model_name = model_name
+        self.filepath = filepath
+        self.save_freq = save_freq
+        self.save_weights_only = save_weights_only
+        self.verbose = verbose
+        
+        assert isinstance(save_freq, int), 'save frequency must be an integer number of episodes'
+        
+    def on_episode_end(self, episode: int):
+        if ((episode+1) % self.save_freq) == 0:
+            fmt_keys = [tup[1] for tup in string.Formatter().parse(str(self.filepath)) if tup[1] is not None]
+            
+            fmt_dict = {}
+            if 'episode' in fmt_keys:
+                fmt_dict['episode'] = episode+1
+                fmt_keys.pop('episode')
+            for key in fmt_keys:
+                fmt_dict[key] = getattr(self.algorithm, key)
+
+            fps = str(self.filepath).format(**fmt_dict)
+            
+            self.algorithm.save_model(self.model_name, fps, self.save_weights_only)
+
+            if self.verbose:
+                print(f"Saving model {self.model_name} at episode {episode+1} to file {fps}")
+
+
+
+
 class AlgorithmResultCheckpoint(Callback):
     """Save algorithm results periodically during training.
     

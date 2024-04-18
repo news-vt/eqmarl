@@ -1,6 +1,7 @@
 import pathlib
 import tensorflow.keras as keras
 from datetime import datetime
+import string
 
 
 class Callback:
@@ -132,10 +133,20 @@ class AlgorithmResultCheckpoint(Callback):
 
     def on_episode_end(self, episode: int):
         if ((episode+1) % self.save_freq) == 0:
+            fmt_keys = [tup[1] for tup in string.Formatter().parse(str(self.filepath)) if tup[1] is not None]
+            
+            fmt_dict = {}
+            if 'episode' in fmt_keys:
+                fmt_dict['episode'] = episode+1
+                fmt_keys.pop('episode')
+            for key in fmt_keys:
+                fmt_dict[key] = getattr(self.algorithm, key)
+
             fps = str(self.filepath).format(
-                datetime=datetime.now().isoformat(),
-                episode=episode+1,
+                **fmt_dict,
+                # datetime=datetime.now().isoformat(),
+                # episode=episode+1,
                 )
             self.algorithm.save(filepath=fps)
             if self.verbose:
-                print(f"Saving results at episode {episode+1} to file {self.filepath}")
+                print(f"Saving results at episode {episode+1} to file {fps}")

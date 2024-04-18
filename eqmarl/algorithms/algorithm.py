@@ -4,6 +4,8 @@ import gymnasium as gym
 from tqdm import trange
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras as keras
+import string
 from pathlib import Path
 import json
 from datetime import datetime
@@ -42,7 +44,8 @@ class Algorithm:
         self.episode_metrics_callback = episode_metrics_callback
         self._episode_reward_history = []
         self._episode_metrics_history = []
-        
+        self._models = {}
+
     @property
     def episode_reward_history(self):
         # TODO may need resource locking here if multi-threading training.
@@ -74,6 +77,14 @@ class Algorithm:
                 }
         else:
             return {}
+
+    @property
+    def models(self) -> dict[str, keras.Model]:
+        return self._models
+
+    @models.setter
+    def models(self, models: dict[str, keras.Model]):
+        self._models = models
 
 
     def policy(self, state) -> tuple[int, tf.Tensor]:
@@ -208,6 +219,13 @@ class Algorithm:
             metrics_history=self.episode_metrics_history_dict,
             )
 
+    def save_model(self, model_name: str, filepath: str, save_weights_only: bool = True):
+        """Saves the model with the given name."""
+        if save_weights_only:
+            self.models[model_name].save_weights(filepath)
+        else:
+            self.models[model_name].save(filepath)
+
     @staticmethod
     def save_train_results(filepath: Union[str, Path], reward_history: np.ndarray, metrics_history: dict[str, Any]):
         """Saves training results to JSON file."""
@@ -240,6 +258,7 @@ class VectorAlgorithm(Algorithm):
         self.n_envs = self.env.num_envs
         self._episode_reward_history = []
         self._episode_metrics_history = []
+        self._models = {}
 
 
     def policy(self, states, batched: bool = False) -> tuple[list[int], list[tf.Tensor]]:

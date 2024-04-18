@@ -8,6 +8,13 @@ experiment:
   # Filenames to use for saving results at the end of training.
   save:
     metrics_file: &metrics_file !join [*session_dir, '/', 'metrics-{round}.json']
+    model_files:
+      - name: &actor_name "actor-classical-shared"
+        filepath: &actor_file !join [*session_dir, '/', 'actor-{round}.weights.h5']
+        save_weights_only: &actor_weight_only_flag True
+      - name: &critic_name "critic-classical-joint"
+        filepath: &critic_file !join [*session_dir, '/', 'critic-{round}.weights.h5']
+        save_weights_only: &critic_weight_only_flag True
 
   # Training parameters.
   train:
@@ -15,9 +22,23 @@ experiment:
     callbacks:
       - func: eqmarl.AlgorithmResultCheckpoint
         params:
+          filepath: *metrics_file
           save_freq: 100
           verbose: True
-          filepath: *metrics_file
+      - func: eqmarl.AlgorithmModelCheckpoint
+        params:
+          model_name: *actor_name
+          filepath: *actor_file
+          save_weights_only: *actor_weight_only_flag
+          save_freq: 100
+          verbose: True
+      - func: eqmarl.AlgorithmModelCheckpoint
+        params:
+          model_name: *critic_name
+          filepath: *critic_file
+          save_weights_only: *critic_weight_only_flag
+          save_freq: 100
+          verbose: True
 
   # Plotting parameters.
   plot:
@@ -69,7 +90,7 @@ experiment:
           n_actions: 4
           units:
             - 12
-          name: "actor-classical-shared"
+          name: *actor_name
         build_shape: [null, 36]
 
       optimizer_actor:
@@ -84,7 +105,7 @@ experiment:
           n_agents: 2
           units:
             - 12
-          name: "critic-classical-joint"
+          name: *critic_name
         build_shape: [null, 2, 36]
 
       optimizer_critic:

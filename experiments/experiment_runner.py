@@ -147,12 +147,24 @@ def main(config: str, n_train_rounds: int):
             **train_params,
             )
 
-        # Save results to file.
-        metrics_file = exp['save']['metrics_file'].format(
-            datetime_session=datetime_session,
-            round=r,
-        )
-        algo.save_train_results(metrics_file, reward_history, metrics_history)
+        # Save results to file if a metrics file was provided.
+        metrics_file = exp['save'].get('metrics_file', None)
+        if metrics_file is not None:
+            metrics_file = metrics_file.format(
+                datetime_session=datetime_session,
+                round=r,
+            )
+            algo.save_train_results(metrics_file, reward_history, metrics_history)
+            print(f"Saved metrics file {metrics_file}")
+        
+        # Save models to file if filenames were provided.
+        for d in exp['save'].get('model_files', []):
+            model_file = d['filepath'].format(
+                datetime_session=datetime_session,
+                round=r,
+            )
+            algo.save_model(d['name'], model_file, d['save_weights_only'])
+            print(f"Saved model file {model_file}")
         
         # Print the round ending time and elapsed time.
         if n_train_rounds > 1:
@@ -203,3 +215,10 @@ if __name__ == '__main__':
         config=config,
         n_train_rounds=opts.n_train_rounds,
     )
+    
+    
+    
+    # exp = load_experiment(config)
+    # algo: eqmarl.Algorithm = exp['algorithm']
+    
+    # print(f"{algo.models=}")

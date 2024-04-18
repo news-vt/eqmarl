@@ -28,6 +28,10 @@ class MAA2C(VectorAlgorithm):
         ):
         super().__init__(env, episode_metrics_callback)
         assert isinstance(env.action_space, (gym.spaces.MultiDiscrete,)), "only `MultiDiscrete` action spaces are supported"
+        self.models = {
+            model_actor.name: model_actor,
+            model_critic.name: model_critic,
+        }
         self.model_actor = model_actor
         self.model_critic = model_critic
         self.optimizer_actor = optimizer_actor

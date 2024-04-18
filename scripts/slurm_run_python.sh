@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --partition=p100_normal_q
+#SBATCH --partition=normal_q
 #SBATCH --nodes=1
-#SBATCH --ntasks 4
-#SBATCH --cpus-per-task 4
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 48
 #SBATCH --time=48:00:00
 #SBATCH --account="bigdata"
 #SBATCH --mail-type=BEGIN,END,FAIL

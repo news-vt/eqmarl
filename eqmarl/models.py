@@ -364,6 +364,7 @@ def generate_model_CoinGame2_critic_quantum_partite_mdp(
     squash_activation: str = 'arctan', # linear, arctan/atan, tanh
     beta: float = 1.0,
     name: str = None,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ):
     """eQMARL variant of hybrid joint quantum critic for CoinGame.
     """
@@ -390,6 +391,7 @@ def generate_model_CoinGame2_critic_quantum_partite_mdp(
         observables=observables,
         squash_activation=squash_activation,
         encoding_layer_cls=ParameterizedRotationLayer_RxRyRz,
+        input_entanglement=input_entanglement,
         )
     
     # Raw observations are given as a 1D list, so convert matrix shape into list size.
@@ -469,6 +471,7 @@ def generate_model_CoinGame2_critic_quantum_partite_pomdp(
     beta: float = 1.0,
     squash_activation: str = 'arctan', # linear, arctan/atan, tanh
     name: str = None,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ):
     """eQMARL variant of hybrid joint quantum critic for CoinGame2.
     """
@@ -492,6 +495,7 @@ def generate_model_CoinGame2_critic_quantum_partite_pomdp(
         observables=observables,
         squash_activation=squash_activation,
         encoding_layer_cls=ParameterizedRotationLayer_RxRyRz,
+        input_entanglement=input_entanglement,
         )
     
     # Raw observations are given as a 1D list, so convert matrix shape into list size.
@@ -579,6 +583,7 @@ def generate_model_CoinGame2_critic_quantum_nnreduce_partite_pomdp(
     name: str = None,
     nn_activation: str = 'linear',
     trainable_w_enc: bool = True,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ):
     """eQMARL variant of hybrid joint quantum critic for CoinGame2.
     """
@@ -602,6 +607,7 @@ def generate_model_CoinGame2_critic_quantum_nnreduce_partite_pomdp(
         squash_activation=squash_activation,
         encoding_layer_cls=ParameterizedRotationLayer_RxRyRz, # Encoder uses 3 weights per qubit.
         trainable_w_enc=trainable_w_enc,
+        input_entanglement=input_entanglement,
         )
     
     # Raw observations are given as a 1D list, so convert matrix shape into list size.
@@ -724,6 +730,7 @@ def generate_model_CoinGame4_critic_quantum_nnreduce_partite_pomdp(
     name: str = None,
     nn_activation: str = 'linear',
     trainable_w_enc: bool = True,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ):
     """eQMARL variant of hybrid joint quantum critic for CoinGame4.
     """
@@ -747,6 +754,7 @@ def generate_model_CoinGame4_critic_quantum_nnreduce_partite_pomdp(
         squash_activation=squash_activation,
         encoding_layer_cls=ParameterizedRotationLayer_RxRyRz, # Encoder uses 3 weights per qubit.
         trainable_w_enc=trainable_w_enc,
+        input_entanglement=input_entanglement,
         )
     
     # Raw observations are given as a 1D list, so convert matrix shape into list size.
@@ -832,6 +840,7 @@ def generate_model_CoinGame4_critic_quantum_partite_mdp(
     name: str = None,
     nn_activation: str = 'linear',
     trainable_w_enc: bool = True,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ):
     """eQMARL variant of hybrid joint quantum critic for CoinGame4.
     """
@@ -855,6 +864,7 @@ def generate_model_CoinGame4_critic_quantum_partite_mdp(
         squash_activation=squash_activation,
         encoding_layer_cls=ParameterizedRotationLayer_RxRyRz, # Encoder uses 3 weights per qubit.
         trainable_w_enc=trainable_w_enc,
+        input_entanglement=input_entanglement,
         )
     
     # Raw observations are given as a 1D list, so convert matrix shape into list size.

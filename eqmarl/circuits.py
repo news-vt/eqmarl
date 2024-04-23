@@ -75,6 +75,7 @@ def generate_partite_variational_encoding_circuit(
     decompose: bool = False,
     variational_layer_cls: ParameterizedOperationGate = VariationalRotationLayer,
     encoding_layer_cls: ParameterizedOperationGate = EncodingLayer,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     ) -> tuple[cirq.Circuit, tuple[np.ndarray,...]]:
     """eQMARL variant of parameterized variational and encoding circuit.
     """
@@ -94,10 +95,11 @@ def generate_partite_variational_encoding_circuit(
     # Build the circuit.
     ops = []
     
-    # Add GHZ entangling layer at the start.
-    ops.append(
-        entangle_agents_phi_plus(qubits, d_qubits, n_parts)
-    )
+    # Add GHZ entangling layer at the start if necessary.
+    if input_entanglement:
+        ops.append(
+            entangle_agents_phi_plus(qubits, d_qubits, n_parts)
+        )
     
     # Build circuit in partitions.
     for pidx in range(n_parts):

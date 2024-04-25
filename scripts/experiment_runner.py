@@ -205,6 +205,7 @@ if __name__ == '__main__':
     opts = get_opts()
     
     # Load the YAML config file.
+    print(f"Loading experiment: {opts.config}")
     config_path = Path(opts.config)
     if config_path.exists():
         with open(config_path) as f:

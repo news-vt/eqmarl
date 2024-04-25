@@ -1,17 +1,17 @@
 import sys
 sys.path.append('../') # Use parent dir.
 
-import eqmarl
-import tensorflow.keras as keras
+from eqmarl.yaml import ConfigLoader
+# import tensorflow.keras as keras
 from pathlib import Path
-from datetime import datetime
+# from datetime import datetime
 import yaml
-from importlib import import_module
-import gymnasium as gym
-from typing import Union
+# from importlib import import_module
+# import gymnasium as gym
+# from typing import Union
 import argparse
-import copy
-import experiment_runner
+# import copy
+from experiment_runner import load_experiment
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,10 +53,12 @@ def plot_with_errorbar(ax, data, axis, error_method: str = 'std', plot_data: str
     # Method to highlight the main plot data.
     ###
     y = data
+    y_name = None
     
     # Plots the average run value at each epoch.
     if plot_data == 'mean':
         y = np.mean(data, axis=0) # (3000,)
+        y_name = 'mean'
     
     # Plots the run with the maximum average value over the last `n` epochs.
     elif plot_data.startswith('max-'):
@@ -64,6 +66,7 @@ def plot_with_errorbar(ax, data, axis, error_method: str = 'std', plot_data: str
         avg_last_n = np.mean(data[:,-n:], axis=1)
         idx_max = np.argmax(avg_last_n)
         y = data[idx_max] # Plot data is the index of the max.
+        y_name = 'max'
         
     # Plots the run with the minimum average value over the last `n` epochs.
     elif plot_data.startswith('min-'):
@@ -71,6 +74,7 @@ def plot_with_errorbar(ax, data, axis, error_method: str = 'std', plot_data: str
         avg_last_n = np.mean(data[:,-n:], axis=1)
         idx_min = np.argmin(avg_last_n)
         y = data[idx_min] # Plot data is the index of the min.
+        y_name = 'min'
     
     else:
         raise ValueError(f"Unsupported plot highlight {plot_data}")
@@ -86,16 +90,16 @@ def plot_with_errorbar(ax, data, axis, error_method: str = 'std', plot_data: str
         if '-' in error_method: # Pull `n` value from method type.
             n = int(error_method.split('-')[-1])
         x = np.arange(data.shape[-1])
-        ax.plot(x, y, 'b-', linewidth=0.2)
-        ax.fill_between(x, y - y_std, y+y_std, color='b', alpha=0.2, linewidth=0.2)
+        ax.plot(x, y, 'b-', linewidth=0.2, label=y_name)
+        ax.fill_between(x, y - y_std, y+y_std, color='b', alpha=0.2, linewidth=0.2, label='std')
     
     # Shaded region is minimum/maximum values at each epoch.
     elif error_method == 'minmax':
         y_min = np.min(data, axis=0) # (3000,)
         y_max = np.max(data, axis=0)# (3000,)
         x = np.arange(data.shape[-1])
-        ax.plot(x, y, 'b-', linewidth=0.2)
-        ax.fill_between(x, y_min, y_max, color='b', alpha=0.2, linewidth=0.2)
+        ax.plot(x, y, 'b-', linewidth=0.2, label=y_name)
+        ax.fill_between(x, y_min, y_max, color='b', alpha=0.2, linewidth=0.2, label='minmax')
     
     else:
         raise ValueError(f"Unsupported error method {error_method}")
@@ -111,7 +115,7 @@ def main(name, config: dict, files: list[str], flag_sort_files: bool):
     
     # session_dir = config['experiment']['session_dir']
     
-    exp = experiment_runner.load_experiment(config)
+    exp = load_experiment(config)
     algo = exp['algorithm']
     
     # Collect filepaths and sort if necessary.
@@ -151,15 +155,21 @@ def main(name, config: dict, files: list[str], flag_sort_files: bool):
         # plot_with_errorbar(axd[k], df_arr[:,i,:], axis=0, method='std', plot_highlight='max-100')
         # plot_with_errorbar(axd[k], df_arr[:,i,:], axis=0, method='std')
         
+        # Turn on legend.
+        axd[k].legend()
+        
+        # Set axis title.
         if 'title' in config_plot['axes'][k]:
             title = config_plot['axes'][k]['title']
         else:
             title = k
         axd[k].set_title(title)
         
+        # Set axis X-label.
         if 'xlabel' in config_plot['axes'][k]:
             axd[k].set_xlabel(config_plot['axes'][k]['xlabel'])
         
+        # Set axis Y-label.
         if 'ylabel' in config_plot['axes'][k]:
             axd[k].set_ylabel(config_plot['axes'][k]['ylabel'])
 
@@ -192,7 +202,7 @@ if __name__ == '__main__':
     config_path = Path(opts.config)
     if config_path.exists():
         with open(config_path) as f:
-            config = yaml.load(f, Loader=eqmarl.yaml.ConfigLoader)
+            config = yaml.load(f, Loader=ConfigLoader)
 
     # Run the experiment.
     main(

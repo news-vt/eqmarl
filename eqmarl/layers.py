@@ -164,6 +164,7 @@ class HybridPartiteVariationalEncodingPQC(keras.layers.Layer):
         encoding_layer_cls: ParameterizedOperationGate = EncodingLayer,
         trainable_w_enc: bool = True,
         input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
+        input_entanglement_type: bool = 'phi+', # ['phi+', 'phi-', 'psi+', 'psi-']
         ):
         name = name or self.__class__.__name__
         super().__init__(name=name)
@@ -173,7 +174,7 @@ class HybridPartiteVariationalEncodingPQC(keras.layers.Layer):
         self.squash_activation = squash_activation
         
         # Build circuit.
-        circuit, (symbols_var, symbols_enc) = self.generate_circuit(qubits, n_parts, d_qubits, n_layers, decompose=True, variational_layer_cls=variational_layer_cls, encoding_layer_cls=encoding_layer_cls, input_entanglement=input_entanglement)
+        circuit, (symbols_var, symbols_enc) = self.generate_circuit(qubits, n_parts, d_qubits, n_layers, decompose=True, variational_layer_cls=variational_layer_cls, encoding_layer_cls=encoding_layer_cls, input_entanglement=input_entanglement, input_entanglement_type=input_entanglement_type)
         
         # Define trainable variables for TensorFlow layer.
         self.w_var = tf.Variable(

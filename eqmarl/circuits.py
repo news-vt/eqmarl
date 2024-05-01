@@ -76,6 +76,7 @@ def generate_partite_variational_encoding_circuit(
     variational_layer_cls: ParameterizedOperationGate = VariationalRotationLayer,
     encoding_layer_cls: ParameterizedOperationGate = EncodingLayer,
     input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
+    input_entanglement_type: bool = 'phi+', # ['phi+', 'phi-', 'psi+', 'psi-']
     ) -> tuple[cirq.Circuit, tuple[np.ndarray,...]]:
     """eQMARL variant of parameterized variational and encoding circuit.
     """
@@ -97,9 +98,25 @@ def generate_partite_variational_encoding_circuit(
     
     # Add GHZ entangling layer at the start if necessary.
     if input_entanglement:
-        ops.append(
-            entangle_agents_phi_plus(qubits, d_qubits, n_parts)
-        )
+        # ['phi+', 'phi-', 'psi+', 'psi-']
+        if input_entanglement_type == 'phi+':
+            ops.append(
+                entangle_agents_phi_plus(qubits, d_qubits, n_parts)
+            )
+        elif input_entanglement_type == 'phi-':
+            ops.append(
+                entangle_agents_phi_minus(qubits, d_qubits, n_parts)
+            )
+        elif input_entanglement_type == 'psi+':
+            ops.append(
+                entangle_agents_psi_plus(qubits, d_qubits, n_parts)
+            )
+        elif input_entanglement_type == 'psi-':
+            ops.append(
+                entangle_agents_psi_minus(qubits, d_qubits, n_parts)
+            )
+        else:
+            raise ValueError(f"unsupported input entanglement type {input_entanglement_type}")
     
     # Build circuit in partitions.
     for pidx in range(n_parts):

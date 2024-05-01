@@ -39,6 +39,8 @@ experiment:
           save_weights_only: *critic_weight_only_flag
           save_freq: 100
           verbose: True
+    tqdm_kwargs:
+      miniters: 100 # Report every 100 episodes (30 reports total).
   
   # Plotting parameters.
   plot:

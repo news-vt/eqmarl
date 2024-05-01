@@ -1,0 +1,117 @@
+experiment:
+
+  roots:
+    root_dir: &root_dir './output/coingame4_maa2c_classical_mdp_central'
+    session_dir: &session_dir !join [*root_dir, '/', '{datetime_session:%Y%m%dT%H%M%S}']
+    checkpoint_root: !join [*root_dir, '/', 'checkpoints']
+
+  # Filenames to use for saving results at the end of training.
+  save:
+    metrics_file: &metrics_file !join [*session_dir, '/', 'metrics-{round}.json']
+    model_files:
+      - name: &actor_name "actor-quantum-shared"
+        filepath: &actor_file !join [*session_dir, '/', 'actor-{round}.weights.h5']
+        save_weights_only: &actor_weight_only_flag True
+      - name: &critic_name "critic-quantum-joint"
+        filepath: &critic_file !join [*session_dir, '/', 'critic-{round}.weights.h5']
+        save_weights_only: &critic_weight_only_flag True
+
+  # Training parameters.
+  train:
+    n_episodes: 3000
+    callbacks:
+      - func: eqmarl.AlgorithmResultCheckpoint
+        params:
+          filepath: *metrics_file
+          save_freq: 100
+          verbose: True
+      - func: eqmarl.AlgorithmModelCheckpoint
+        params:
+          model_name: *actor_name
+          filepath: *actor_file
+          save_weights_only: *actor_weight_only_flag
+          save_freq: 100
+          verbose: True
+      - func: eqmarl.AlgorithmModelCheckpoint
+        params:
+          model_name: *critic_name
+          filepath: *critic_file
+          save_weights_only: *critic_weight_only_flag
+          save_freq: 100
+          verbose: True
+  
+  # Plotting parameters.
+  plot:
+    figsize: [10,8]
+    mosaic: [[undiscounted_reward, coins_collected], [own_coins_collected, own_coin_rate]]
+    axes:
+      undiscounted_reward:
+        title: Score
+        xlabel: epoch
+        ylabel: value
+      coins_collected:
+        title: Coins Collected
+        xlabel: epoch
+        ylabel: value
+      own_coins_collected:
+        title: Own Coins Collected
+        xlabel: epoch
+        ylabel: value
+      own_coin_rate:
+        title: Own Coin Rate
+        xlabel: epoch
+        ylabel: value
+
+  # The algorithm to run.
+  # The keys within the `init_params` key are used with direct substitution in the class initializer.
+  # This includes the following definitions:
+  # - Environment
+  # - Models
+  # - Optimizers
+  algorithm:
+
+    init_func: eqmarl.algorithms.MAA2C
+    init_params:
+      gamma: 0.99
+      alpha: 0.001
+      episode_metrics_callback: eqmarl.environments.coin_game.episode_metrics_callback
+
+      env:
+        func: eqmarl.environments.coin_game.vector_coin_game_make
+        params:
+          domain_name: CoinGame-4
+          gamma: 0.99
+          time_limit: 150
+
+      model_actor:
+        init_func: eqmarl.models.generate_model_CoinGame4_actor_classical_shared_mdp
+        init_params:
+          n_actions: 4
+          units:
+            - 48
+            - 24
+            - 12
+          name: *actor_name
+        build_shape: [null, 100]
+
+      optimizer_actor:
+        func: tensorflow.keras.optimizers.Adam
+        params:
+          learning_rate: 1.0e-3
+
+      
+      model_critic:
+        init_func: eqmarl.models.generate_model_CoinGame4_critic_classical_joint_mdp_central
+        init_params:
+          n_agents: 4
+          units:
+            - 48
+            - 24
+            - 12
+          name: *critic_name
+        build_shape: [null, 4, 100]
+
+      optimizer_critic:
+        func: tensorflow.keras.optimizers.Adam
+        params:
+          learning_rate: 1.0e-3

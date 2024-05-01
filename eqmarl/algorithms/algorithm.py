@@ -5,7 +5,7 @@ from tqdm import trange
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
-import string
+import sys
 from pathlib import Path
 import json
 from datetime import datetime
@@ -152,6 +152,7 @@ class Algorithm:
         n_episodes: int, # Number of episodes.
         max_steps_per_episode: int = 10000,
         callbacks: list[Callback] = [],
+        tqdm_kwargs: dict = {},
         ) -> tuple[np.ndarray, dict[str, Any]]:
         
         print(f"Training for {n_episodes} episodes, press 'Ctrl+C' to terminate early")
@@ -172,7 +173,7 @@ class Algorithm:
         
         # Run training.
         try:
-            with trange(n_episodes, unit='episode') as tepisode:
+            with trange(n_episodes, unit='episode', file=sys.stdout, **tqdm_kwargs) as tepisode:
                 for episode in tepisode:
                     tepisode.set_description(f"Episode {episode}")
                     

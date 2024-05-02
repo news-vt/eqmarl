@@ -1,3 +1,9 @@
+from pathlib import Path
+
+FILEPATH = Path(__file__)
+FIGURE_OUTDIR = FILEPATH.parent/FILEPATH.stem
+FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
+
 #### Seaborn color palette.
 # [0.2980392156862745, 0.4470588235294118, 0.6901960784313725]
 # [0.8666666666666667, 0.5176470588235295, 0.3215686274509804]
@@ -86,6 +92,11 @@ figures = [
                 legend_kwargs=dict(loc='lower right'),
             ),
         ],
+        savefig_kwargs=dict(
+            fname=FIGURE_OUTDIR/f"{FILEPATH.stem}-{m_dict['key']}.pdf",
+            format='pdf',
+            bbox_inches='tight',
+        ),
     ) for m_dict in metrics
 ]
 

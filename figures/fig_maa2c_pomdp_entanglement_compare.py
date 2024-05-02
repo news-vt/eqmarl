@@ -16,21 +16,32 @@ FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
 # [0.8, 0.7254901960784313, 0.4549019607843137]
 # [0.39215686274509803, 0.7098039215686275, 0.803921568627451]
 
+
 series=[
     dict(
-        key='eQMARL',
-        # blob='~/Downloads/output/coingame_maa2c_quantum_mdp/20240418T140126/metrics-[0-5].json',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_psi+/20240501T152929/metrics-[0-5].json',
-        color=[0.2980392156862745,0.4470588235294118,0.6901960784313725],
+        key='$\Phi^{+}$',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits/20240419T112012/metrics-[0-5].json',
+        color=[0.2980392156862745, 0.4470588235294118, 0.6901960784313725],
     ),
+    # dict(
+    #     key='$\Phi^{-}$',
+    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_phi-/20240502T132041/metrics-[0-5].json',
+    #     color=[0.8666666666666667, 0.5176470588235295, 0.3215686274509804],
+    # ),
+    # dict(
+    #     key='$\Psi^{+}$',
+    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_psi+/20240502T132036/metrics-[0-5].json',
+    #     color=[0.3333333333333333, 0.6588235294117647, 0.40784313725490196],
+    # ),
+    # dict(
+    #     key='$\Psi^{-}$',
+    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_psi-/20240502T132037/metrics-[0-5].json',
+    #     color=[0.7686274509803922, 0.3058823529411765, 0.3215686274509804],
+    # ),
     dict(
-        key='Classical Central CTDE',
-        blob='~/Downloads/output/coingame_maa2c_classical_mdp_central/20240501T185443/metrics-[0-5].json',
-        color=[0.8666666666666667,0.5176470588235295,0.3215686274509804],),
-    dict(
-        key='Classical Split CTDE',
-        blob='~/Downloads/output/coingame_maa2c_classical_mdp/20240418T133421/metrics-[0-5].json',
-        color=[0.3333333333333333,0.6588235294117647,0.40784313725490196],
+        key='None',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_noentanglement/20240423T171957/metrics-[0-5].json',
+        color=[0.5058823529411764, 0.4470588235294118, 0.7019607843137254],
     ),
 ]
 

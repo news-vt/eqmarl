@@ -20,32 +20,32 @@ FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
 series=[
     dict(
         key='$\Psi^{+}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_psi+/20240501T152929/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_psi+/20240501T152929/metrics-[0-9].json',
         color=[0.2980392156862745, 0.4470588235294118, 0.6901960784313725],
         zorder=5,
     ),
     dict(
         key='$\Psi^{-}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_psi-/20240501T152950/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_psi-/20240501T152950/metrics-[0-9].json',
         color=[0.8666666666666667, 0.5176470588235295, 0.3215686274509804],
         zorder=4,
     ),
     dict(
         key='$\Phi^{+}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_phi+/20240501T152920/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_phi+/20240501T152920/metrics-[0-9].json',
         color=[0.3333333333333333, 0.6588235294117647, 0.40784313725490196],
         zorder=3,
     ),
     dict(
         key='$\Phi^{-}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_phi-/20240501T152925/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_phi-/20240501T152925/metrics-[0-9].json',
         color=[0.7686274509803922, 0.3058823529411765, 0.3215686274509804],
         zorder=2,
     ),
     dict(
-        key='None',
-        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_noentanglement/20240425T114557/metrics-[0-5].json',
-        color=[0.5058823529411764, 0.4470588235294118, 0.7019607843137254],
+        key='$\mathtt{None}$',
+        blob='~/Downloads/output/coingame_maa2c_quantum_mdp_noentanglement/20240425T114557/metrics-[0-9].json',
+        color=[0.39215686274509803, 0.7098039215686275, 0.803921568627451],
         zorder=1,
     ),
 ]
@@ -105,7 +105,7 @@ figures = [
                     dict(
                         type='axhline',
                         y=20,
-                        linestyle='-.',
+                        linestyle='--',
                         color='grey',
                         linewidth=1,
                     ),
@@ -120,12 +120,23 @@ figures = [
                     ),
                     dict(
                         type='axhline',
+                        y=0.95,
+                        linestyle='--',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                    dict(
+                        type='axhline',
                         y=0.8,
-                        linestyle='-.',
+                        linestyle='--',
                         color='grey',
                         linewidth=1,
                     ),
                 ] if 'rate' in m_dict['key'] else []),
+                yticks=(dict(
+                    ticks=[0.0, 0.2, 0.4, 0.6, 0.8, 0.95, 1.0],
+                    labels=['0.0', '0.2', '0.4', '0.6', '0.8', '0.95', '1.0'],
+                ) if 'rate' in m_dict['key'] else None),
                 legend_kwargs=dict(
                     loc='upper center',
                     bbox_to_anchor=(0.5, 1.12),

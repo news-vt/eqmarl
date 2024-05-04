@@ -19,51 +19,28 @@ FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
 series=[
     dict(
         key='$\\mathtt{fCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_classical_pomdp_central/20240501T185443/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_classical_pomdp_central/20240501T185443/metrics-[0-9].json',
         color=[0.8666666666666667,0.5176470588235295,0.3215686274509804],
         zorder=1,
     ),
     dict(
         key='$\\mathtt{qfCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_central/20240503T151226/metrics-[0-1].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_central/20240503T151226/metrics-[0-9].json',
         color=[0.8549019607843137, 0.5450980392156862, 0.7647058823529411],
         zorder=2,
     ),
     dict(
         key='$\\mathtt{sCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_classical_pomdp/20240418T133536/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_classical_pomdp/20240418T133536/metrics-[0-9].json',
         color=[0.3333333333333333,0.6588235294117647,0.40784313725490196],
         zorder=3,
     ),
     dict(
         key='$\\mathtt{eQMARL-}\Psi^{+}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi+/20240502T161522/metrics-[0-5].json',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi+/20240502T161522/metrics-[0-9].json',
         color=[0.2980392156862745,0.4470588235294118,0.6901960784313725],
         zorder=4,
     ),
-    
-    
-    
-    #### ANCILLARY
-    
-    # dict(
-    #     key='Q 15 layers',
-    #     blob='~/Downloads/output/coingame4_maa2c_quantum_pomdp_nnreduce_4qubits_15layers/20240501T120947/metrics-[0-5].json',
-    #     color=[0.5058823529411764, 0.4470588235294118, 0.7019607843137254],
-    # ),
-    
-    # # coingame_maa2c_quantum_pomdp/20240418T140242/
-    # dict(
-    #     key='eQMARL (pure quantum)',
-    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp/20240418T140242//metrics-[0-5].json',
-    #     color=[0.39215686274509803, 0.7098039215686275, 0.803921568627451],
-    # ),
-    
-    # dict(
-    #     key='eQMARL ($\Psi^{+}$)',
-    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi+/20240502T131044/metrics-[0-5].json',
-    #     color=[0.8, 0.7254901960784313, 0.4549019607843137],
-    # ),
 ]
 
 
@@ -121,7 +98,7 @@ figures = [
                     dict(
                         type='axhline',
                         y=20,
-                        linestyle='-.',
+                        linestyle='--',
                         color='grey',
                         linewidth=1,
                     ),
@@ -136,12 +113,23 @@ figures = [
                     ),
                     dict(
                         type='axhline',
+                        y=0.95,
+                        linestyle='--',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                    dict(
+                        type='axhline',
                         y=0.8,
-                        linestyle='-.',
+                        linestyle='--',
                         color='grey',
                         linewidth=1,
                     ),
                 ] if 'rate' in m_dict['key'] else []),
+                yticks=(dict(
+                    ticks=[0.0, 0.2, 0.4, 0.6, 0.8, 0.95, 1.0],
+                    labels=['0.0', '0.2', '0.4', '0.6', '0.8', '0.95', '1.0'],
+                ) if 'rate' in m_dict['key'] else None),
                 legend_kwargs=dict(
                     loc='upper center',
                     bbox_to_anchor=(0.5, 1.12),

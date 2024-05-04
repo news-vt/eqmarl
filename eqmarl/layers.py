@@ -72,6 +72,7 @@ class HybridVariationalEncodingPQC(keras.layers.Layer):
         
         # Build circuit.
         circuit, (symbols_var, symbols_enc) = self.generate_circuit(qubits, d_qubits, n_layers, decompose=True, variational_layer_cls=variational_layer_cls, encoding_layer_cls=encoding_layer_cls)
+        self.circuit = circuit
         
         # Define trainable variables for TensorFlow layer.
         self.w_var = tf.Variable(
@@ -175,6 +176,7 @@ class HybridPartiteVariationalEncodingPQC(keras.layers.Layer):
         
         # Build circuit.
         circuit, (symbols_var, symbols_enc) = self.generate_circuit(qubits, n_parts, d_qubits, n_layers, decompose=True, variational_layer_cls=variational_layer_cls, encoding_layer_cls=encoding_layer_cls, input_entanglement=input_entanglement, input_entanglement_type=input_entanglement_type)
+        self.circuit = circuit
         
         # Define trainable variables for TensorFlow layer.
         self.w_var = tf.Variable(

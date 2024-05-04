@@ -19,29 +19,34 @@ FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
 
 series=[
     dict(
+        key='$\Psi^{+}$',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi+/20240502T161522/metrics-[0-5].json',
+        color=[0.2980392156862745, 0.4470588235294118, 0.6901960784313725],
+        zorder=5,
+    ),
+    dict(
+        key='$\Psi^{-}$',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi-/20240502T165705/metrics-[0-5].json',
+        color=[0.8666666666666667, 0.5176470588235295, 0.3215686274509804],
+        zorder=4,
+    ),
+    dict(
         key='$\Phi^{+}$',
         blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits/20240419T112012/metrics-[0-5].json',
-        color=[0.2980392156862745, 0.4470588235294118, 0.6901960784313725],
+        color=[0.3333333333333333, 0.6588235294117647, 0.40784313725490196],
+        zorder=3,
     ),
-    # dict(
-    #     key='$\Phi^{-}$',
-    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_phi-/20240502T132041/metrics-[0-5].json',
-    #     color=[0.8666666666666667, 0.5176470588235295, 0.3215686274509804],
-    # ),
-    # dict(
-    #     key='$\Psi^{+}$',
-    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_psi+/20240502T132036/metrics-[0-5].json',
-    #     color=[0.3333333333333333, 0.6588235294117647, 0.40784313725490196],
-    # ),
-    # dict(
-    #     key='$\Psi^{-}$',
-    #     blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_psi-/20240502T132037/metrics-[0-5].json',
-    #     color=[0.7686274509803922, 0.3058823529411765, 0.3215686274509804],
-    # ),
+    dict(
+        key='$\Phi^{-}$',
+        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_phi-/20240502T165705/metrics-[0-5].json',
+        color=[0.7686274509803922, 0.3058823529411765, 0.3215686274509804],
+        zorder=2,
+    ),
     dict(
         key='None',
         blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_noentanglement/20240423T171957/metrics-[0-5].json',
         color=[0.5058823529411764, 0.4470588235294118, 0.7019607843137254],
+        zorder=1,
     ),
 ]
 
@@ -80,16 +85,54 @@ figures = [
                 ylabel=m_dict['title'],
                 series=[
                     dict(
+                        type='plot_with_errorbar',
                         key=d['key'],
                         label=d['key'],
                         color=d['color'],
                         plot_method='mean-rolling',
                         error_method='minmax-rolling',
-                        plot_kwargs=dict(linewidth=1),
-                        fill_kwargs=dict(alpha=0.4, linewidth=0.2)
-                    ) for d in series
-                ],
-                legend_kwargs=dict(loc='lower right'),
+                        plot_kwargs=dict(linewidth=1, zorder=len(series)+d.get('zorder', i)),
+                        fill_kwargs=dict(alpha=0.4, linewidth=0.1, zorder=d.get('zorder', i)),
+                    ) for i, d in enumerate(series)
+                ] + ([
+                    dict(
+                        type='axhline',
+                        y=25,
+                        linestyle='--',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                    dict(
+                        type='axhline',
+                        y=20,
+                        linestyle='-.',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                ] if 'reward' in m_dict['key'] or 'coins_collected' in m_dict['key'] else []
+                ) + ([
+                    dict(
+                        type='axhline',
+                        y=1,
+                        linestyle='--',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                    dict(
+                        type='axhline',
+                        y=0.8,
+                        linestyle='-.',
+                        color='grey',
+                        linewidth=1,
+                    ),
+                ] if 'rate' in m_dict['key'] else []),
+                legend_kwargs=dict(
+                    loc='upper center',
+                    bbox_to_anchor=(0.5, 1.12),
+                    ncol=5,
+                    fancybox=True,
+                    shadow=True,
+                ),
             ),
         ],
         savefig_kwargs=dict(
@@ -97,6 +140,30 @@ figures = [
             format='pdf',
             bbox_inches='tight',
         ),
+        seaborn_style='ticks',
+        seaborn_style_kwargs={},
+        seaborn_context='paper',
+        seaborn_context_kwargs={},
+        zoom_region=(dict(
+            inset_axes=dict(
+                bounds=[0.65, 0.15, 0.3, 0.3],
+                xlim=[2500, 3000],
+                ylim=[0.95, 1.01],
+            ),
+            indicate_inset_zoom=dict(
+                edgecolor="black",
+            ),
+        ) if 'rate' in m_dict['key'] # Zoom for rate metric.
+        else dict(
+            inset_axes=dict(
+                bounds=[0.65, 0.15, 0.3, 0.3],
+                xlim=[2500, 3000],
+                ylim=[22, 27],
+            ),
+            indicate_inset_zoom=dict(
+                edgecolor="black",
+            ),
+        )),
     ) for m_dict in metrics
 ]
 

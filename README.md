@@ -33,7 +33,7 @@ $ python -m pip install -r requirements.txt -r requirements-dev.txt
 
 Installation of this repo can be little finicky because of the requirements for `tensorflow-quantum` on various systems.
 
-If you are using Anaconda to manage Python, be aware that the version of Python may have been built using an outdated version of macOS. To check this, you can run:
+If you are using Anaconda to manage Python on macOS, be aware that the version of Python may have been built using an outdated version of macOS. To check this, you can run:
 
 ```bash
 $ python -c "from distutils import util; print(util.get_platform())"

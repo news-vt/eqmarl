@@ -1,7 +1,7 @@
 experiment:
 
   roots:
-    root_dir: &root_dir './output/coingame_maa2c_mdp_qfctde'
+    root_dir: &root_dir '../experiment_output/coingame_maa2c_mdp_qfctde'
     session_dir: &session_dir !join [*root_dir, '/', '{datetime_session:%Y%m%dT%H%M%S}']
     checkpoint_root: !join [*root_dir, '/', 'checkpoints']
 

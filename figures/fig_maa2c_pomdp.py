@@ -19,25 +19,25 @@ FIGURE_OUTDIR.mkdir(parents=True, exist_ok=True) # Create.
 series=[
     dict(
         key='$\\mathtt{fCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_classical_pomdp_central/20240501T185443/metrics-[0-9].json',
+        blob='../experiment_output/coingame_maa2c_pomdp_fctde/20240501T185443/metrics-[0-9].json',
         color=[0.8666666666666667,0.5176470588235295,0.3215686274509804],
         zorder=1,
     ),
     dict(
         key='$\\mathtt{qfCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_central/20240503T151226/metrics-[0-9].json',
+        blob='../experiment_output/coingame_maa2c_pomdp_qfctde/20240503T151226/metrics-[0-9].json',
         color=[0.8549019607843137, 0.5450980392156862, 0.7647058823529411],
         zorder=2,
     ),
     dict(
         key='$\\mathtt{sCTDE}$',
-        blob='~/Downloads/output/coingame_maa2c_classical_pomdp/20240418T133536/metrics-[0-9].json',
+        blob='../experiment_output/coingame_maa2c_pomdp_sctde/20240418T133536/metrics-[0-9].json',
         color=[0.3333333333333333,0.6588235294117647,0.40784313725490196],
         zorder=3,
     ),
     dict(
         key='$\\mathtt{eQMARL-}\Psi^{+}$',
-        blob='~/Downloads/output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_psi+/20240502T161522/metrics-[0-9].json',
+        blob='../experiment_output/coingame_maa2c_pomdp_eqmarl_psi+/20240502T161522/metrics-[0-9].json',
         color=[0.2980392156862745,0.4470588235294118,0.6901960784313725],
         zorder=4,
     ),

@@ -1,3 +1,6 @@
+# Ignore macOS specific files.
+.DS_Store
+
 # Custom files and folders to ignore.
 output/
 

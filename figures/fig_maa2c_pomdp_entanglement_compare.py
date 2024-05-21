@@ -125,13 +125,6 @@ figures = [
                         color='grey',
                         linewidth=1,
                     ),
-                    dict(
-                        type='axhline',
-                        y=0.8,
-                        linestyle='--',
-                        color='grey',
-                        linewidth=1,
-                    ),
                 ] if 'rate' in m_dict['key'] else []),
                 yticks=(dict(
                     ticks=[0.0, 0.2, 0.4, 0.6, 0.8, 0.95, 1.0],
@@ -144,6 +137,35 @@ figures = [
                     fancybox=True,
                     shadow=True,
                 ),
+                reports=([
+                    dict(
+                        type='y-threshold-max',
+                        yvalue=0.8,
+                    ),
+                    dict(
+                        type='y-threshold-max',
+                        yvalue=0.95,
+                    ),
+                    dict(
+                        type='y-threshold-max',
+                        yvalue=1.0,
+                    ),
+                    dict(
+                        type='y-max',
+                    ),
+                ] if 'rate' in m_dict['key'] else [
+                    dict(
+                        type='y-threshold-max',
+                        yvalue=20,
+                    ),
+                    dict(
+                        type='y-threshold-max',
+                        yvalue=25,
+                    ),
+                    dict(
+                        type='y-max',
+                    ),
+                ]),
             ),
         ],
         savefig_kwargs=dict(

@@ -1,7 +1,7 @@
 experiment:
 
   roots:
-    root_dir: &root_dir './output/coingame_maa2c_classical_pomdp_central'
+    root_dir: &root_dir './output/coingame_maa2c_mdp_eqmarl_psi-'
     session_dir: &session_dir !join [*root_dir, '/', '{datetime_session:%Y%m%dT%H%M%S}']
     checkpoint_root: !join [*root_dir, '/', 'checkpoints']
 
@@ -9,10 +9,10 @@ experiment:
   save:
     metrics_file: &metrics_file !join [*session_dir, '/', 'metrics-{round}.json']
     model_files:
-      - name: &actor_name "actor-classical-shared"
+      - name: &actor_name "actor-quantum-shared"
         filepath: &actor_file !join [*session_dir, '/', 'actor-{round}.weights.h5']
         save_weights_only: &actor_weight_only_flag True
-      - name: &critic_name "critic-classical-joint"
+      - name: &critic_name "critic-quantum-joint"
         filepath: &critic_file !join [*session_dir, '/', 'critic-{round}.weights.h5']
         save_weights_only: &critic_weight_only_flag True
 
@@ -39,7 +39,9 @@ experiment:
           save_weights_only: *critic_weight_only_flag
           save_freq: 100
           verbose: True
-
+    tqdm_kwargs:
+      miniters: 100 # Report every 100 episodes (30 reports total).
+  
   # Plotting parameters.
   plot:
     plotargs:
@@ -87,31 +89,41 @@ experiment:
           time_limit: 50
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CoinGame2_actor_classical_shared_pomdp
+        init_func: eqmarl.models.generate_model_CoinGame2_actor_quantum_shared_mdp
         init_params:
-          keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
-          n_actions: 4
-          units:
-            - 12
+          n_layers: 5
+          squash_activation: arctan
           name: *actor_name
         build_shape: [null, 36]
 
       optimizer_actor:
-        func: tensorflow.keras.optimizers.Adam
-        params:
-          learning_rate: 1.0e-3
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-2
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-1
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-1
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CoinGame2_critic_classical_joint_pomdp_central
+        init_func: eqmarl.models.generate_model_CoinGame2_critic_quantum_partite_mdp
         init_params:
-          keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
           n_agents: 2
-          units:
-            - 12
+          n_layers: 5
+          input_entanglement_type: 'psi-'
+          squash_activation: arctan
           name: *critic_name
         build_shape: [null, 2, 36]
 
       optimizer_critic:
-        func: tensorflow.keras.optimizers.Adam
-        params:
-          learning_rate: 1.0e-3
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-2
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-1
+        - func: tensorflow.keras.optimizers.Adam
+          params:
+            learning_rate: 1.0e-1

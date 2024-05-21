@@ -1,7 +1,7 @@
 experiment:
 
   roots:
-    root_dir: &root_dir './output/coingame_maa2c_quantum_pomdp_nnreduce_4qubits_phi-'
+    root_dir: &root_dir './output/coingame_maa2c_pomdp_eqmarl_phi+'
     session_dir: &session_dir !join [*root_dir, '/', '{datetime_session:%Y%m%dT%H%M%S}']
     checkpoint_root: !join [*root_dir, '/', 'checkpoints']
 
@@ -122,7 +122,7 @@ experiment:
           squash_activation: arctan
           nn_activation: linear
           trainable_w_enc: False
-          input_entanglement_type: 'phi-'
+          input_entanglement_type: 'phi+'
           name: *critic_name
         build_shape: [null, 2, 36]
 

@@ -44,7 +44,8 @@ experiment:
   plot:
     plotargs:
       plot_data: mean
-      error_method: minmax
+      # error_method: minmax
+      error_method: std
     figsize: [10,8]
     mosaic: [[undiscounted_reward, coins_collected], [own_coins_collected, own_coin_rate]]
     axes:

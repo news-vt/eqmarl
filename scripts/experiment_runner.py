@@ -177,11 +177,7 @@ def main(config: str, n_train_rounds: int):
     datetime_session_end = datetime.now()
     print(f"Training session end at {datetime_session_end.isoformat()} (elapsed {datetime_session_end-datetime_session})")
 
-    
-    
-    
 
-    
 def get_opts() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -216,10 +212,3 @@ if __name__ == '__main__':
         config=config,
         n_train_rounds=opts.n_train_rounds,
     )
-    
-    
-    
-    # exp = load_experiment(config)
-    # algo: eqmarl.Algorithm = exp['algorithm']
-    
-    # print(f"{algo.models=}")

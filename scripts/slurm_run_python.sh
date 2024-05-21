@@ -4,9 +4,6 @@
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 48
 #SBATCH --time=48:00:00
-#SBATCH --account="bigdata"
-#SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=${USER}@vt.edu
 
 # Load modules.
 echo "Loading modules"

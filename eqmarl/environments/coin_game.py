@@ -1,5 +1,5 @@
 """
-This environment was gleaned from the work of Phan et al. 2022 (https://dl.acm.org/doi/10.5555/3535850.3535967).
+This environment was adapted from the work of Phan et al. 2022 (https://dl.acm.org/doi/10.5555/3535850.3535967).
 
 The original source for this code can be found on GitHub at: https://github.com/thomyphan/emergent-cooperation/blob/main/mate/environments/coin_game.py
 """

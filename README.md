@@ -1,5 +1,9 @@
 # eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![python](https://img.shields.io/badge/Python->=3.9,<3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![tensorflow](https://img.shields.io/badge/TensorFlow-2.7.0-FF6F00.svg?style=flat&logo=tensorflow)](https://www.tensorflow.org)
+
 This repository is the official implementation of _eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels_.
 
 ## Installation
@@ -159,5 +163,5 @@ Figure | Dynamics | Metric
 
 ## Authors
 
-- [zanderman](https://github.com/zanderman)
-- [saadwalid](https://github.com/saadwalid)
+- [zanderman](https://github.com/zanderman) [![zanderman github](https://img.shields.io/badge/GitHub-zanderman-181717.svg?style=flat&logo=github)](https://github.com/zanderman)
+- [saadwalid](https://github.com/saadwalid) [![saadwalid github](https://img.shields.io/badge/GitHub-saadwalid-181717.svg?style=flat&logo=github)](https://github.com/saadwalid)

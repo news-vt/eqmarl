@@ -155,3 +155,9 @@ Figure | Dynamics | Metric
 [fig_maa2c_pomdp-coins_collected.pdf](./figures/fig_maa2c_pomdp/fig_maa2c_pomdp-coins_collected.pdf) | POMDP | Total coins collected
 [fig_maa2c_pomdp-own_coin_rate.pdf](./figures/fig_maa2c_pomdp/fig_maa2c_pomdp-own_coin_rate.pdf) | POMDP | Own coin rate
 [fig_maa2c_pomdp-own_coins_collected.pdf](./figures/fig_maa2c_pomdp/fig_maa2c_pomdp-own_coins_collected.pdf) | POMDP | Own coins collected
+
+
+## Authors
+
+- [zanderman](https://github.com/zanderman)
+- [saadwalid](https://github.com/saadwalid)

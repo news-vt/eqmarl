@@ -83,7 +83,8 @@ figures = [
                         label=d['key'],
                         color=d['color'],
                         plot_method='mean-rolling',
-                        error_method='minmax-rolling',
+                        # error_method='minmax-rolling',
+                        error_method='std',
                         plot_kwargs=dict(linewidth=1, zorder=len(series)+d.get('zorder', i)),
                         fill_kwargs=dict(alpha=0.4, linewidth=0.1, zorder=d.get('zorder', i)),
                     ) for i, d in enumerate(series)
@@ -146,6 +147,9 @@ figures = [
                     dict(
                         type='y-max',
                     ),
+                    dict(
+                        type='y-std',
+                    ),
                 ] if 'rate' in m_dict['key'] else [
                     dict(
                         type='y-threshold-max',
@@ -157,6 +161,9 @@ figures = [
                     ),
                     dict(
                         type='y-max',
+                    ),
+                    dict(
+                        type='y-std',
                     ),
                 ]),
             ),

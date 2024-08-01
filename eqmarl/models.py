@@ -447,3 +447,210 @@ def generate_model_CoinGame2_critic_quantum_nnreduce_central_pomdp(
                 ], name='observables-value')
         ], name=name)
     return model
+
+
+# MARK: CartPole
+###
+# Vectorized CartPole models.
+###
+
+def generate_model_CartPole_actor_classical_shared_mdp(n_actions: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+    assert type(units) == list, 'units must be a list of integers'
+    layers = []
+    layers += [keras.layers.Lambda(lambda x: x/state_bounds)] # Normalizes input states.]
+    layers += [keras.layers.Flatten()]
+    layers += [keras.layers.Dense(u, activation=activation) for u in units]
+    layers += [keras.layers.Dense(n_actions, activation='softmax', name='policy')] # Policy estimation pi(a|s)
+    model = keras.Sequential(layers=layers, **kwargs)
+    return model
+
+
+def generate_model_CartPole_critic_classical_joint_mdp_central(n_agents: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+    assert type(units) == list, 'units must be a list of integers'
+    layers = []
+    layers += [keras.layers.Lambda(lambda x: x/state_bounds)] # Normalizes input states.]
+    layers += [keras.layers.Flatten()]
+    layers += [keras.layers.Dense(u, activation=activation) for u in units]
+    layers += [keras.layers.Dense(1, activation=None, name='v')] # Value function estimator V(s).
+    model = keras.Sequential(layers=layers, **kwargs)
+    return model
+
+def generate_model_CartPole_critic_classical_joint_mdp(n_agents: int, units: list[int], activation: str = 'relu', **kwargs) -> keras.Model:
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+    assert type(units) == list, 'units must be a list of integers'
+    layers = []
+    layers += [keras.layers.Lambda(lambda x: x/state_bounds)] # Normalizes input states.]
+    layers += [keras.layers.Reshape((n_agents,-1))]
+    layers += [keras.layers.LocallyConnected1D(u, kernel_size=1, activation=activation) for u in units]
+    layers += [keras.layers.Flatten()]
+    layers += [keras.layers.Dense(1, activation=None, name='v')] # Value function estimator V(s).
+    model = keras.Sequential(layers=layers, **kwargs)
+    return model
+
+def generate_model_CartPole_actor_quantum_shared_mdp(
+    n_layers: int,
+    squash_activation: str = 'arctan',
+    beta: float = 1.0,
+    name: str = None,
+    ):
+    """Single-agent variant of hybrid quantum actor for CoinGame.
+    """
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole.
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+    
+    # Generate observables.
+    # Alternating observable (one is negative of the other).
+    # Observables are:
+    # 1. Z0 * Z1 * Z2 * Z3
+    # 2. -(Z0 * Z1 * Z2 * Z3)
+    observables = [
+        cirq.Z(qubits[0]) * cirq.Z(qubits[1]) * cirq.Z(qubits[2]) * cirq.Z(qubits[3]),
+        -cirq.Z(qubits[0]) * cirq.Z(qubits[1]) * cirq.Z(qubits[2]) * cirq.Z(qubits[3]),
+    ]
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx, # only 1 feature per dimension, so use only a single rotation.
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(input_size,), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((*obs_shape,)), # Reshape to matrix grid.
+                ], name="input-preprocess"),
+            qlayer, # Hybrid quantum layer.
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                keras.layers.Softmax(),
+                ], name='observables-policy')
+        ], name=name)
+    return model
+
+
+def generate_model_CartPole_critic_quantum_central_mdp(
+    n_agents: int,
+    n_layers: int,
+    squash_activation: str = 'arctan', # linear, arctan/atan, tanh
+    beta: float = 1.0,
+    name: str = None,
+    ):
+    """Centralized variant of hybrid joint quantum critic for CoinGame.
+    """
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole.
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4 * n_agents
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(d_qubits)
+
+    # Observables is joint Pauli product across all qubits.
+    observables = [ft.reduce(lambda x,y: x*y, [cirq.Z(q) for q in qubits])]
+
+    # Define quantum layer.
+    qlayer = HybridVariationalEncodingPQC(
+        qubits=qubits, 
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(n_agents, input_size), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((n_agents*obs_shape[0], *obs_shape[1:])), # Reshape to matrix grid (n_agents*4,1)
+                ], name="input-preprocess"),
+            qlayer,
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                ], name='observables-value')
+        ], name=name)
+    return model
+
+def generate_model_CartPole_critic_quantum_partite_mdp(
+    n_agents: int,
+    n_layers: int,
+    squash_activation: str = 'arctan', # linear, arctan/atan, tanh
+    beta: float = 1.0,
+    name: str = None,
+    input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
+    input_entanglement_type: bool = 'phi+', # ['phi+', 'phi-', 'psi+', 'psi-']
+    ):
+    """eQMARL variant of hybrid joint quantum critic for CoinGame.
+    """
+    state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
+
+    # Shape of observables is already known for CartPole.
+    obs_shape = (4,1)
+
+    # Qubit dimension is pre-determined for CartPole environment.
+    # Using `4` to match observable dimension.
+    d_qubits = 4
+
+    # Create qubit list using qubit dimensions.
+    qubits = cirq.LineQubit.range(n_agents * d_qubits)
+
+    # Observables is joint Pauli product across all qubits.
+    observables = [ft.reduce(lambda x,y: x*y, [cirq.Z(q) for q in qubits])]
+
+    # Define quantum layer.
+    qlayer = HybridPartiteVariationalEncodingPQC(
+        qubits=qubits, 
+        n_parts=n_agents,
+        d_qubits=d_qubits,
+        n_layers=n_layers,
+        observables=observables,
+        squash_activation=squash_activation,
+        encoding_layer_cls=ParameterizedRotationLayer_Rx,
+        input_entanglement=input_entanglement,
+        input_entanglement_type=input_entanglement_type,
+        )
+    
+    # Raw observations are given as a 1D list, so convert matrix shape into list size.
+    input_size = ft.reduce(lambda x, y: x*y, obs_shape)
+
+    model = keras.Sequential([
+            keras.Input(shape=(n_agents, input_size), dtype=tf.dtypes.float32, name='input'), # Shape of model input, which should match the observation vector shape.
+            keras.Sequential([
+                keras.layers.Lambda(lambda x: x/state_bounds), # Normalizes input states.
+                keras.layers.Reshape((n_agents, *obs_shape)), # Reshape to matrix grid.
+                ], name="input-preprocess"),
+            qlayer,
+            keras.Sequential([
+                RescaleWeighted(len(observables)),
+                keras.layers.Lambda(lambda x: x * beta),
+                ], name='observables-value')
+        ], name=name)
+    return model

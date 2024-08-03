@@ -55,7 +55,7 @@ def load_optimizer(config: Union[dict,list[dict]]) -> Union[keras.optimizers.Opt
         return optimizer
 
 
-def load_experiment(config: dict) -> dict:
+def load_experiment(config: dict, flag_print_model_summary: bool = False) -> dict:
     
     config_exp = config['experiment']
     roots = config_exp['roots']
@@ -79,6 +79,8 @@ def load_experiment(config: dict) -> dict:
         model_config = algo_init_params[key]
         model = load_model(model_config)
         algo_init_params[key] = model # Overwrite the config.
+        if flag_print_model_summary:
+            print(model.summary())
 
     # Optimizers.
     optimizer_keys = [k for k in algo_init_params.keys() if 'optimizer' in k]
@@ -112,7 +114,12 @@ def load_experiment(config: dict) -> dict:
 
 
 
-def main(config: str, n_train_rounds: int):
+def main(
+    config: str,
+    n_train_rounds: int,
+    flag_print_model_summary: bool = False,
+    flag_dry_run: bool = False,
+    ):
 
     # Time of training session start.
     datetime_session = datetime.now()
@@ -120,19 +127,23 @@ def main(config: str, n_train_rounds: int):
 
     # Create a directory for this training session.
     session_dir = Path(config['experiment']['roots']['session_dir'].format(datetime_session=datetime_session))
-    session_dir.expanduser().mkdir(parents=True, exist_ok=True)
+    if not flag_dry_run: # Only create output directory if dry-run is NOT specified.
+        session_dir.expanduser().mkdir(parents=True, exist_ok=True)
 
     if n_train_rounds > 1:
         print(f'Training for {n_train_rounds} rounds')
 
     # Iteratively 
     for r in range(n_train_rounds):
-        
-        
+
         config_session = copy.deepcopy(config)
-        exp = load_experiment(config_session)
+        exp = load_experiment(config_session, flag_print_model_summary=flag_print_model_summary)
         algo: eqmarl.Algorithm = exp['algorithm']
         train_params = exp['train']
+    
+        # Terminate if dry run.
+        if flag_dry_run:
+            break
         
         # Save some of the session and round details within the algorithm so that callbacks and other entities will have access to them.
         algo.datetime_session = datetime_session
@@ -190,6 +201,17 @@ def get_opts() -> argparse.Namespace:
         default=1,
         help='Number of times to perform training.',
         )
+    parser.add_argument('-p', '--print-model-summary',
+        action='store_true',
+        default=False,
+        help='Print model summary.',
+        )
+    parser.add_argument('-d', '--dry-run',
+        action='store_true',
+        default=False,
+        help='Dry run of experiment, only loads experiment files and preps for experiment to be run but does not actually train anything; useful for testing.',
+        )
+    
     
     args = parser.parse_args()
     return args
@@ -211,4 +233,6 @@ if __name__ == '__main__':
     main(
         config=config,
         n_train_rounds=opts.n_train_rounds,
+        flag_print_model_summary=opts.print_model_summary,
+        flag_dry_run=opts.dry_run,
     )

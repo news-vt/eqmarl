@@ -99,7 +99,7 @@ experiment:
       optimizer_actor:
         func: tensorflow.keras.optimizers.Adam
         params:
-          learning_rate: 3.0e-4
+          learning_rate: 1.0e-3
 
       model_critic:
         init_func: eqmarl.models.generate_model_CartPole_critic_classical_joint_pomdp_central
@@ -114,4 +114,4 @@ experiment:
       optimizer_critic:
         func: tensorflow.keras.optimizers.Adam
         params:
-          learning_rate: 3.0e-4
+          learning_rate: 1.0e-3

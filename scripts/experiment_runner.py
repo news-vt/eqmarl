@@ -225,9 +225,9 @@ if __name__ == '__main__':
     # Load the YAML config file.
     print(f"Loading experiment: {opts.config}")
     config_path = Path(opts.config)
-    if config_path.exists():
-        with open(config_path) as f:
-            config = yaml.load(f, Loader=eqmarl.yaml.ConfigLoader)
+    assert config_path.exists(), f"experiment config file does not exist: {opts.config}"
+    with open(config_path) as f:
+        config = yaml.load(f, Loader=eqmarl.yaml.ConfigLoader)
 
     # Run the experiment.
     main(

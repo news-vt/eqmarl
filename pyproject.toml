@@ -2,8 +2,7 @@
 name = "eqmarl"
 version = "1.0.0"
 authors = [
-    {name = "Alexander DeRieux", email="derieux@vt.edu"},
-    {name = "Walid Saad", email="walids@vt.edu"},
+    {name = "Anonymous Authors"},
 ]
 requires-python = ">=3.9, <3.10" # >=3.7,<=3.9 required for tensorflow-quantum, but >=3.9 required for typing usage, so fixing ==3.9 here.
 license = {text = "MIT"}

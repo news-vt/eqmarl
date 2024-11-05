@@ -2,9 +2,9 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import functools as ft
 
-from .layers import *
-from .tools import *
-from .observables import *
+from ..layers.tfq_layers import *
+from ..tools import *
+from ..observables import *
 
 
 # MARK: CoinGame2 models.

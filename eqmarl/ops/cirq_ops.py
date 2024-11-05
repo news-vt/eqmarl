@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Type
 import numpy as np
 import cirq
-from .tools import flatten_to_operations
+from ..tools import flatten_to_operations
 
 
 ## Functions to create various entangled input states.

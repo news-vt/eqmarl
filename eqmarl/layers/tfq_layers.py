@@ -3,8 +3,8 @@ import tensorflow.keras as keras
 import tensorflow_quantum as tfq
 import cirq
 
-from .ops import *
-from .circuits import *
+from ..ops.cirq_ops import *
+from ..circuits.cirq_circuits import *
 
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 import cirq
 
-from .ops import *
+from ..ops.cirq_ops import *
 
 
 def generate_variational_encoding_circuit(

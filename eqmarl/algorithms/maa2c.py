@@ -167,7 +167,7 @@ class MAA2C(VectorAlgorithm):
         Returns a tuple of (episode_reward, interaction_history, n_steps).
         """
 
-        episode_reward = 0
+        episode_reward = 0.
         batch = []
 
         # Reset environment.

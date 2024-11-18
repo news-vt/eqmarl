@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import functools as ft
 
+from ..layers.keras_layers import *
 from ..layers.tfq_layers import *
 from ..tools import *
 from ..observables import *

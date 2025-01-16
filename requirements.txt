@@ -5,8 +5,7 @@ pandas
 qutip
 seaborn
 sympy
-tensorflow==2.7.0
-tensorflow-quantum==0.7.2
+# tensorflow-quantum==0.7.2
 cirq
 tqdm
 scipy

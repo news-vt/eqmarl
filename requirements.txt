@@ -11,3 +11,4 @@ cirq
 tqdm
 scipy
 pennylane
+pyyaml

@@ -5,7 +5,6 @@ from . import math
 from . import environments
 from . import layers
 from . import models
-from . import observables
 from . import algorithms
 from . import callbacks
 from . import yaml

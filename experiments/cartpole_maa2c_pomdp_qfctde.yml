@@ -87,7 +87,7 @@ experiment:
           num_envs: 2
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CartPole_actor_quantum_nnreduce_shared_pomdp
+        init_func: eqmarl.models.CartPole.generate_model_CartPole_actor_quantum_nnreduce_shared_pomdp
         init_params:
           d_qubits: 4
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
@@ -113,7 +113,7 @@ experiment:
             learning_rate: 1.0e-1
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CartPole_critic_quantum_nnreduce_central_pomdp
+        init_func: eqmarl.models.CartPole.generate_model_CartPole_critic_quantum_nnreduce_central_pomdp
         init_params:
           d_qubits: 4
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.

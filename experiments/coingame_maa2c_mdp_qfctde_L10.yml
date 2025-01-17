@@ -88,7 +88,7 @@ experiment:
           time_limit: 50
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CoinGame2_actor_quantum_shared_mdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame2_actor_quantum_shared_mdp
         init_params:
           n_layers: 10
           squash_activation: arctan
@@ -107,7 +107,7 @@ experiment:
             learning_rate: 1.0e-1
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CoinGame2_critic_quantum_central_mdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame2_critic_quantum_central_mdp
         init_params:
           n_agents: 2
           n_layers: 10

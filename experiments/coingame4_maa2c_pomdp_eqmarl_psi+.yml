@@ -87,7 +87,7 @@ experiment:
           time_limit: 50
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CoinGame4_actor_quantum_nnreduce_shared_pomdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame4_actor_quantum_nnreduce_shared_pomdp
         init_params:
           d_qubits: 4
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
@@ -113,7 +113,7 @@ experiment:
             learning_rate: 1.0e-1
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CoinGame4_critic_quantum_nnreduce_partite_pomdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame4_critic_quantum_nnreduce_partite_pomdp
         init_params:
           d_qubits: 4
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.

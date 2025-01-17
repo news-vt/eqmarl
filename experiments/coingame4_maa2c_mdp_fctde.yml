@@ -87,7 +87,7 @@ experiment:
           time_limit: 50
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CoinGame4_actor_classical_shared_mdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame4_actor_classical_shared_mdp
         init_params:
           n_actions: 4
           units:
@@ -101,7 +101,7 @@ experiment:
           learning_rate: 1.0e-3
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CoinGame4_critic_classical_joint_mdp_central
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame4_critic_classical_joint_mdp_central
         init_params:
           n_agents: 4
           units:

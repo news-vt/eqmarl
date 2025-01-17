@@ -87,7 +87,7 @@ experiment:
           time_limit: 50
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CoinGame2_actor_classical_shared_pomdp
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame2_actor_classical_shared_pomdp
         init_params:
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
           n_actions: 4
@@ -102,7 +102,7 @@ experiment:
           learning_rate: 1.0e-3
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CoinGame2_critic_classical_joint_pomdp_central
+        init_func: eqmarl.models.CoinGame.generate_model_CoinGame2_critic_classical_joint_pomdp_central
         init_params:
           keepdims: [0,2,3] # Preserves observations indices [0,2,3], removes index [1] which contains info about other agent locations -- makes observation partially-observable.
           n_agents: 2

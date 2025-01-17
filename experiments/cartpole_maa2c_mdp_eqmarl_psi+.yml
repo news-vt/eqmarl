@@ -88,7 +88,7 @@ experiment:
           num_envs: 2
 
       model_actor:
-        init_func: eqmarl.models.generate_model_CartPole_actor_quantum_shared_mdp
+        init_func: eqmarl.models.CartPole.generate_model_CartPole_actor_quantum_shared_mdp
         init_params:
           n_layers: 5
           squash_activation: arctan
@@ -107,7 +107,7 @@ experiment:
             learning_rate: 1.0e-1
 
       model_critic:
-        init_func: eqmarl.models.generate_model_CartPole_critic_quantum_partite_mdp
+        init_func: eqmarl.models.CartPole.generate_model_CartPole_critic_quantum_partite_mdp
         init_params:
           n_agents: 2
           n_layers: 5

@@ -218,6 +218,22 @@ Figure | Dynamics | Metric
 [fig_cartpole_maa2c_mdp-reward_mean.pdf](./figures/fig_cartpole_maa2c_mdp/fig_cartpole_maa2c_mdp-reward_mean.pdf) | MDP | Average reward
 [fig_cartpole_maa2c_pomdp-reward_mean.pdf](./figures/fig_cartpole_maa2c_pomdp/fig_cartpole_maa2c_pomdp-reward_mean.pdf) | POMDP | Average reward
 
+### MiniGrid experiments
+
+The training results for the comparison of the frameworks in the $\texttt{MiniGrid}$ environment outlined in the paper are given in the tables below:
+
+Dynamics | Framework | Reward: Mean (value) | Reward: $95\%$ CI | Number of Trainable Critic Parameters
+--- | --- | --- | --- | ---
+POMDP | $\texttt{fCTDE}$ | -63.04 | (-65.16, -61.06) | 29,601
+POMDP | $\texttt{qfCTDE}$ | -85.86 | (-87.03, -84.72) | 3,697
+POMDP | $\texttt{sCTDE}$ | -88.02 |  (-88.69, -87.10) | 29,801
+POMDP | $\texttt{eQMARL}-\Psi^+$ | -13.32 | (-14.68, -11.91) | 3,697
+
+The figures that aggregate the metric performance for each of the experiments are given in the table below:
+
+Figure | Dynamics | Metric
+--- | --- | ---
+[fig_minigrid-reward_mean.pdf](./figures/fig_minigrid/fig_minigrid-reward_mean.pdf) | POMDP | Average reward
 
 ### Ablation experiments
 

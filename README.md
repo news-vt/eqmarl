@@ -3,7 +3,8 @@
 [![arXiv](https://img.shields.io/badge/quant--ph-arXiv:2405.17486-b31b1b.svg?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2405.17486)
 [![OpenReview](https://img.shields.io/badge/OpenReview.net-cR5GTis5II-8D1018.svg)](https://openreview.net/forum?id=cR5GTis5II)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC-BY-4.0](https://img.shields.io/badge/License-CC_BY_4.0-04a635.svg?logo=creativecommons&logoColor=white)](https://opensource.org/licenses/MIT)
+
 [![python](https://img.shields.io/badge/Python->=3.9,<3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![tensorflow](https://img.shields.io/badge/TensorFlow-2.7.0-FF6F00.svg?style=flat&logo=tensorflow)](https://www.tensorflow.org)
 

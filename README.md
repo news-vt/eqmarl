@@ -1,10 +1,13 @@
 # eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels
 
+[![arXiv](https://img.shields.io/badge/quant--ph-arXiv:2405.17486-b31b1b.svg?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2405.17486)
+[![OpenReview](https://img.shields.io/badge/OpenReview.net-cR5GTis5II-8D1018.svg)](https://openreview.net/forum?id=cR5GTis5II)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![python](https://img.shields.io/badge/Python->=3.9,<3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![tensorflow](https://img.shields.io/badge/TensorFlow-2.7.0-FF6F00.svg?style=flat&logo=tensorflow)](https://www.tensorflow.org)
 
-This repository is the official implementation of _eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels_.
+This repository is the official implementation of "eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels", published in the Thirteenth International Conference on Learning Representations (ICLR) 2025.
 
 ## Installation
 
@@ -306,3 +309,17 @@ Figure | Dynamics | Metric
 
 - [zanderman](https://github.com/zanderman) [![zanderman github](https://img.shields.io/badge/GitHub-zanderman-181717.svg?style=flat&logo=github)](https://github.com/zanderman)
 - [saadwalid](https://github.com/saadwalid) [![saadwalid github](https://img.shields.io/badge/GitHub-saadwalid-181717.svg?style=flat&logo=github)](https://github.com/saadwalid)
+
+## Citation
+
+If you use the code in this repository for your research or publication, please cite our paper published in ICLR 2025:
+```bibtex
+@inproceedings{derieux2025eqmarl,
+    title={e{QMARL}: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels},
+    author={Alexander DeRieux and Walid Saad},
+    booktitle={The Thirteenth International Conference on Learning Representations},
+    year={2025},
+    url={https://openreview.net/forum?id=cR5GTis5II},
+    doi={10.48550/arXiv.2405.17486}
+}
+```

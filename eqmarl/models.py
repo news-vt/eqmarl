@@ -507,7 +507,7 @@ def generate_model_CartPole_actor_quantum_shared_mdp(
     beta: float = 1.0,
     name: str = None,
     ):
-    """Single-agent variant of hybrid quantum actor for CoinGame.
+    """Single-agent variant of hybrid quantum actor for CartPole.
     """
     state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
 
@@ -567,7 +567,7 @@ def generate_model_CartPole_critic_quantum_central_mdp(
     beta: float = 1.0,
     name: str = None,
     ):
-    """Centralized variant of hybrid joint quantum critic for CoinGame.
+    """Centralized variant of hybrid joint quantum critic for CartPole.
     """
     state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
 
@@ -620,7 +620,7 @@ def generate_model_CartPole_critic_quantum_partite_mdp(
     input_entanglement: bool = True, # Flag to enable input entanglement (defaults to True).
     input_entanglement_type: bool = 'phi+', # ['phi+', 'phi-', 'psi+', 'psi-']
     ):
-    """eQMARL variant of hybrid joint quantum critic for CoinGame.
+    """eQMARL variant of hybrid joint quantum critic for CartPole.
     """
     state_bounds = tf.convert_to_tensor(np.array([2.4, 2.5, 0.21, 2.5], dtype='float32'))
 
@@ -944,7 +944,7 @@ def generate_model_CoinGame4_actor_quantum_nnreduce_shared_pomdp(
     """Single-agent variant of hybrid quantum actor for CoinGame4.
     """
 
-    # Shape of observables is already known for CoinGame2.
+    # Shape of observables is already known for CoinGame4.
     obs_shape = (4,5,5)
 
     # Create qubit list using qubit dimensions.
@@ -1002,7 +1002,7 @@ def generate_model_CoinGame4_critic_quantum_nnreduce_partite_pomdp(
     """eQMARL variant of hybrid joint quantum critic for CoinGame4.
     """
 
-    # Shape of observables is already known for CoinGame2.
+    # Shape of observables is already known for CoinGame4.
     obs_shape = (4,5,5)
 
     # Create qubit list using qubit dimensions.
@@ -1111,10 +1111,10 @@ def generate_model_CoinGame4_critic_quantum_central_mdp(
     """Centralized variant of hybrid joint quantum critic for CoinGame4.
     """
 
-    # Shape of observables is already known for CoinGame2.
+    # Shape of observables is already known for CoinGame4.
     obs_shape = (4,5,5)
 
-    # Qubit dimension is pre-determined for CoinGame2 environment.
+    # Qubit dimension is pre-determined for CoinGame4 environment.
     # Using `4` to match observable dimension.
     # d_qubits = 4 * n_agents
     d_qubits = 4
@@ -1172,7 +1172,7 @@ def generate_model_CoinGame4_critic_quantum_partite_mdp(
     """eQMARL variant of hybrid joint quantum critic for CoinGame4.
     """
 
-    # Shape of observables is already known for CoinGame2.
+    # Shape of observables is already known for CoinGame4.
     obs_shape = (4,5,5)
 
     # Create qubit list using qubit dimensions.
@@ -1229,7 +1229,7 @@ def generate_model_CoinGame4_critic_quantum_nnreduce_central_pomdp(
     """Central variant of hybrid joint quantum critic for CoinGame4.
     """
 
-    # Shape of observables is already known for CoinGame2.
+    # Shape of observables is already known for CoinGame4.
     obs_shape = (4,5,5)
 
     # Create qubit list using qubit dimensions.

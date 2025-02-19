@@ -193,7 +193,7 @@ Figure | Dynamics | Metric
 
 The training results for the comparison of the frameworks in the $\texttt{CartPole}$ environment outlined in the paper are given in the tables below:
 
-Dynamics | Framework | Reward: Mean | Reward: Std. Dev. | Reward: $95\%$ CI
+Dynamics | Framework | Reward: Mean | Reward: Std. Dev. | Reward: 95% CI
 --- | --- | --- | --- | ---
 MDP | $\texttt{eQMARL-}\Psi^{+}$ | 79.11 | 50.62 | (77.40, 81.16)
 MDP | $\texttt{qfCTDE}$ | 121.35 | 110.13 | (118.29, 125.12)
@@ -226,7 +226,7 @@ Figure | Dynamics | Metric
 
 The training results for the comparison of the frameworks in the $\texttt{MiniGrid}$ environment outlined in the paper are given in the tables below:
 
-Dynamics | Framework | Reward: Mean (value) | Reward: $95\%$ CI | Number of Trainable Critic Parameters
+Dynamics | Framework | Reward: Mean (value) | Reward: 95% CI | Number of Trainable Critic Parameters
 --- | --- | --- | --- | ---
 POMDP | $\texttt{fCTDE}$ | -63.04 | (-65.16, -61.06) | 29,601
 POMDP | $\texttt{qfCTDE}$ | -85.86 | (-87.03, -84.72) | 3,697
@@ -243,7 +243,7 @@ Figure | Dynamics | Metric
 
 The training results for the ablation experiment using in the $\texttt{CoinGame-2}$ environment outlined in the paper are given in the tables below:
 
-Dynamics | Framework | Parameters | Score: Mean | Score: Std. Dev. | Score: $95\%$ CI | Own coin rate: Mean | Own coin rate: Std. Dev. | Own coin rate: $95\%$ CI
+Dynamics | Framework | Parameters | Score: Mean | Score: Std. Dev. | Score: 95% CI | Own coin rate: Mean | Own coin rate: Std. Dev. | Own coin rate: 95% CI
 --- | --- | --- | --- | --- | --- | --- | --- | ---
 MDP | $\texttt{fCTDE-3}$ | 223 | 2.42 | 2.35 | (2.35, 2.49) | 0.6720 | 0.2024 | (0.6685, 0.6769)
 MDP | $\texttt{fCTDE-6}$ | 445 | 7.41 | 3.46 | (7.19, 7.65) | 0.7658 | 0.1414 | (0.7610, 0.7712)

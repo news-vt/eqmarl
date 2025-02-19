@@ -14,4 +14,4 @@ dependencies = {file = ["requirements.txt"]}
 optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 
 [tool.setuptools.packages]
-find = { exclude = ["figures*", "scripts*"] }  # Scanning implicit namespaces is active by default
+find = { exclude = ["figures*", "scripts*", "experiments*", "experiment_output*"] }  # Scanning implicit namespaces is active by default

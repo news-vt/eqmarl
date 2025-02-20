@@ -7,11 +7,11 @@ authors = [
 ]
 requires-python = ">=3.9, <3.10" # >=3.7,<=3.9 required for tensorflow-quantum, but >=3.9 required for typing usage, so fixing ==3.9 here.
 license = {text = "CC BY 4.0"}
-dynamic = ["dependencies"] # See section "tool.setuptools.dynamic".
+dynamic = ["dependencies", "optional-dependencies"] # See section "tool.setuptools.dynamic".
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }} # Install using options "[dev]".
 
 [tool.setuptools.packages]
 find = { exclude = ["figures*", "scripts*", "experiments*", "experiment_output*"] }  # Scanning implicit namespaces is active by default

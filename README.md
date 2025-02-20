@@ -1,10 +1,14 @@
 # eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![arXiv](https://img.shields.io/badge/quant--ph-arXiv:2405.17486-b31b1b.svg?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2405.17486)
+[![OpenReview](https://img.shields.io/badge/OpenReview.net-cR5GTis5II-8D1018.svg)](https://openreview.net/forum?id=cR5GTis5II)
+
+[![License: CC-BY-4.0](https://img.shields.io/badge/License-CC_BY_4.0-04a635.svg?logo=creativecommons&logoColor=white)](https://creativecommons.org/licenses/by/4.0/)
+
 [![python](https://img.shields.io/badge/Python->=3.9,<3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![tensorflow](https://img.shields.io/badge/TensorFlow-2.7.0-FF6F00.svg?style=flat&logo=tensorflow)](https://www.tensorflow.org)
 
-This repository is the official implementation of _eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels_.
+This repository is the official implementation of "eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels", published in the Thirteenth International Conference on Learning Representations (ICLR) 2025.
 
 ## Installation
 
@@ -189,7 +193,7 @@ Figure | Dynamics | Metric
 
 The training results for the comparison of the frameworks in the $\texttt{CartPole}$ environment outlined in the paper are given in the tables below:
 
-Dynamics | Framework | Reward: Mean | Reward: Std. Dev. | Reward: $95\%$ CI
+Dynamics | Framework | Reward: Mean | Reward: Std. Dev. | Reward: 95% CI
 --- | --- | --- | --- | ---
 MDP | $\texttt{eQMARL-}\Psi^{+}$ | 79.11 | 50.62 | (77.40, 81.16)
 MDP | $\texttt{qfCTDE}$ | 121.35 | 110.13 | (118.29, 125.12)
@@ -218,12 +222,28 @@ Figure | Dynamics | Metric
 [fig_cartpole_maa2c_mdp-reward_mean.pdf](./figures/fig_cartpole_maa2c_mdp/fig_cartpole_maa2c_mdp-reward_mean.pdf) | MDP | Average reward
 [fig_cartpole_maa2c_pomdp-reward_mean.pdf](./figures/fig_cartpole_maa2c_pomdp/fig_cartpole_maa2c_pomdp-reward_mean.pdf) | POMDP | Average reward
 
+### MiniGrid experiments
+
+The training results for the comparison of the frameworks in the $\texttt{MiniGrid}$ environment outlined in the paper are given in the tables below:
+
+Dynamics | Framework | Reward: Mean (value) | Reward: 95% CI | Number of Trainable Critic Parameters
+--- | --- | --- | --- | ---
+POMDP | $\texttt{fCTDE}$ | -63.04 | (-65.16, -61.06) | 29,601
+POMDP | $\texttt{qfCTDE}$ | -85.86 | (-87.03, -84.72) | 3,697
+POMDP | $\texttt{sCTDE}$ | -88.02 |  (-88.69, -87.10) | 29,801
+POMDP | $\texttt{eQMARL}-\Psi^+$ | -13.32 | (-14.68, -11.91) | 3,697
+
+The figures that aggregate the metric performance for each of the experiments are given in the table below:
+
+Figure | Dynamics | Metric
+--- | --- | ---
+[fig_minigrid-reward_mean.pdf](./figures/fig_minigrid/fig_minigrid-reward_mean.pdf) | POMDP | Average reward
 
 ### Ablation experiments
 
 The training results for the ablation experiment using in the $\texttt{CoinGame-2}$ environment outlined in the paper are given in the tables below:
 
-Dynamics | Framework | Parameters | Score: Mean | Score: Std. Dev. | Score: $95\%$ CI | Own coin rate: Mean | Own coin rate: Std. Dev. | Own coin rate: $95\%$ CI
+Dynamics | Framework | Parameters | Score: Mean | Score: Std. Dev. | Score: 95% CI | Own coin rate: Mean | Own coin rate: Std. Dev. | Own coin rate: 95% CI
 --- | --- | --- | --- | --- | --- | --- | --- | ---
 MDP | $\texttt{fCTDE-3}$ | 223 | 2.42 | 2.35 | (2.35, 2.49) | 0.6720 | 0.2024 | (0.6685, 0.6769)
 MDP | $\texttt{fCTDE-6}$ | 445 | 7.41 | 3.46 | (7.19, 7.65) | 0.7658 | 0.1414 | (0.7610, 0.7712)
@@ -290,3 +310,18 @@ Figure | Dynamics | Metric
 
 - [zanderman](https://github.com/zanderman) [![zanderman github](https://img.shields.io/badge/GitHub-zanderman-181717.svg?style=flat&logo=github)](https://github.com/zanderman)
 - [saadwalid](https://github.com/saadwalid) [![saadwalid github](https://img.shields.io/badge/GitHub-saadwalid-181717.svg?style=flat&logo=github)](https://github.com/saadwalid)
+
+## Citation
+
+If you use the code in this repository for your research or publication, please cite our paper published in ICLR 2025 using the following BibTeX entry (also available in [CITATION.bib](CITATION.bib)):
+
+```bibtex
+@inproceedings{derieux2025eqmarl,
+    title={e{QMARL}: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels},
+    author={Alexander DeRieux and Walid Saad},
+    booktitle={The Thirteenth International Conference on Learning Representations},
+    year={2025},
+    url={https://openreview.net/forum?id=cR5GTis5II},
+    doi={10.48550/arXiv.2405.17486}
+}
+```

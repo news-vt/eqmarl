@@ -1,4 +1,5 @@
-gymnasium
+gymnasium>=0.26,<1.0
+minigrid
 matplotlib
 numpy
 pandas

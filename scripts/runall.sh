@@ -51,16 +51,4 @@ sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiment
 # sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/cartpole_maa2c_pomdp_eqmarl_phi-.yml -r 5
 # sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/cartpole_maa2c_pomdp_eqmarl_noentanglement.yml -r 5
 
-# ##### CoinGame4
-
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_mdp_fctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_mdp_sctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_mdp_qfctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_mdp_eqmarl_psi+.yml -r 5
-
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_pomdp_fctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_pomdp_sctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_pomdp_qfctde.yml -r 5
-# sbatch ./scripts/slurm_run_python.sh ./scripts/experiment_runner.py ./experiments/coingame4_maa2c_pomdp_eqmarl_psi+.yml -r 5
-
 set +x

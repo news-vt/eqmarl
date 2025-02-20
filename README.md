@@ -313,7 +313,8 @@ Figure | Dynamics | Metric
 
 ## Citation
 
-If you use the code in this repository for your research or publication, please cite our paper published in ICLR 2025:
+If you use the code in this repository for your research or publication, please cite our paper published in ICLR 2025 using the following BibTeX entry (also available in [CITATION.bib](CITATION.bib)):
+
 ```bibtex
 @inproceedings{derieux2025eqmarl,
     title={e{QMARL}: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels},

@@ -12,6 +12,9 @@
 
 This repository is the official implementation of "eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels", published in the Thirteenth International Conference on Learning Representations (ICLR) 2025.
 
+https://github.com/user-attachments/assets/7daf9eac-4b95-4d33-88be-d93856b48622
+> See [eqmarl-vis](https://github.com/news-vt/eqmarl-vis) repository for visualizations.
+
 ## Installation
 
 The codebase is provided as an installable Python package called `eqmarl`. To install the package via `pip`, you can run:

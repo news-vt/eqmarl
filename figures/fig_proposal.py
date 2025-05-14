@@ -60,6 +60,12 @@ metrics = [
 
 figures = [
     dict(
+        rc={
+            'font.size': 12,
+            'figure.dpi': 600,
+            'pdf.fonttype': 42,
+            'ps.fonttype': 42,
+        }, # Runtime configuration.
         type='subplots',
         kwargs=dict(
             figsize=[5.499999861629998, 3.399186852607058],
@@ -176,6 +182,7 @@ figures = [
             fname=FIGURE_OUTDIR/f"{FILEPATH.stem}-{m_dict['key']}.pdf",
             format='pdf',
             bbox_inches='tight',
+            dpi='figure',
         ),
         seaborn_style='ticks',
         seaborn_style_kwargs={},

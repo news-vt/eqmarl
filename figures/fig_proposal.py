@@ -124,8 +124,8 @@ figures = [
                 ) if 'rate' in m_dict['key'] else None),
                 legend_kwargs=dict(
                     loc='upper center',
-                    bbox_to_anchor=(0.5, 1.12),
-                    ncol=4,
+                    bbox_to_anchor=(0.5, 1.27),
+                    ncol=1,
                     fancybox=True,
                     shadow=True,
                 ),

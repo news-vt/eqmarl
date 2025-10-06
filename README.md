@@ -4,6 +4,7 @@
 [![arXiv](https://img.shields.io/badge/quant--ph-arXiv:2405.17486-b31b1b.svg?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2405.17486)
 [![OpenReview](https://img.shields.io/badge/OpenReview.net-cR5GTis5II-8D1018.svg)](https://openreview.net/forum?id=cR5GTis5II)
 
+[![YouTube](https://img.shields.io/badge/YouTube-ytIXCeRVaOA-FF0000.svg?logo=youtube)](https://youtu.be/ytIXCeRVaOA)
 
 [![License: CC-BY-4.0](https://img.shields.io/badge/License-CC_BY_4.0-04a635.svg?logo=creativecommons&logoColor=white)](https://creativecommons.org/licenses/by/4.0/)
 
@@ -13,8 +14,10 @@
 This repository is the official implementation of "eQMARL: Entangled Quantum Multi-Agent Reinforcement Learning for Distributed Cooperation over Quantum Channels", published in the Thirteenth International Conference on Learning Representations (ICLR) 2025.
 > See [Citation](#citation) section for BibTeX reference.
 
-https://github.com/user-attachments/assets/7daf9eac-4b95-4d33-88be-d93856b48622
-> See [eqmarl-vis](https://github.com/news-vt/eqmarl-vis) repository for visualizations.
+[![Watch the video](https://img.youtube.com/vi/ytIXCeRVaOA/hqdefault.jpg)](https://youtu.be/ytIXCeRVaOA)
+> Watch the [full video on YouTube](https://youtu.be/ytIXCeRVaOA) [![YouTube](https://img.shields.io/badge/YouTube-ytIXCeRVaOA-FF0000.svg?logo=youtube)](https://youtu.be/ytIXCeRVaOA)
+>
+> See [eqmarl-vis](https://github.com/news-vt/eqmarl-vis) repository for visualizations [![GitHub](https://img.shields.io/badge/GitHub-eqmarl--vis-181717.svg?logo=github)](https://github.com/news-vt/eqmarl-vis)
 
 ## Installation
 
